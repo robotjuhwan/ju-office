@@ -205,6 +205,8 @@ section {
   --y: 50;
   --accent: #3366ff;
   --delay: 0s;
+  --sprite-float-name: float;
+  --sprite-float-duration: 2.9s;
   position: absolute;
   left: calc(var(--x) * 1%);
   top: calc(var(--y) * 1%);
@@ -214,12 +216,14 @@ section {
   align-items: center;
   gap: 0.2rem;
   max-width: 220px;
-  animation: float 2.9s ease-in-out infinite;
+  animation: var(--sprite-float-name) var(--sprite-float-duration) ease-in-out infinite;
   animation-delay: var(--delay);
   pointer-events: none;
 }
 
 .sprite-aura {
+  --sprite-aura-name: auraPulse;
+  --sprite-aura-duration: 3.2s;
   position: absolute;
   width: 92px;
   height: 92px;
@@ -227,7 +231,21 @@ section {
   background: radial-gradient(circle, color-mix(in srgb, var(--accent) 32%, transparent) 0%, transparent 72%);
   opacity: 0.92;
   filter: blur(1.25px);
-  animation: auraPulse 3.2s ease-in-out infinite;
+  animation: var(--sprite-aura-name) var(--sprite-aura-duration) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+.sprite-signature {
+  position: absolute;
+  z-index: 0;
+  width: 74px;
+  height: 74px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, #ffffff 55%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 78%);
+  opacity: 0.5;
+  transform: scale(0.94);
+  animation: signaturePulse 3.4s ease-in-out infinite;
   animation-delay: var(--delay);
 }
 
@@ -338,45 +356,144 @@ section {
   white-space: nowrap;
 }
 
+.sprite-role-ceo {
+  --sprite-float-duration: 4.4s;
+}
+
 .sprite-role-ceo .sprite-avatar {
   border-radius: 12px;
   transform: rotate(-2deg);
 }
 
-.sprite-role-cto .sprite-avatar {
-  border-radius: 10px;
-}
-
-.sprite-role-pm .sprite-avatar {
-  border-radius: 18px;
-}
-
-.sprite-role-eng .sprite-avatar {
-  border-radius: 11px;
-}
-
-.sprite-role-ops .sprite-avatar {
-  border-radius: 9px;
+.sprite-role-ceo .sprite-aura {
+  --sprite-aura-name: auraExecutiveGlow;
+  --sprite-aura-duration: 5.6s;
 }
 
 .sprite-role-ceo .sprite-flair {
   background: #ede9fe;
 }
 
+.sprite-signature-ceo {
+  border-color: color-mix(in srgb, var(--accent) 58%, #ffffff 42%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, #ffffff 72%) 0%, transparent 72%);
+  animation: signatureExecutive 5.6s ease-in-out infinite;
+}
+
+.sprite-role-cto {
+  --sprite-float-duration: 3.1s;
+}
+
+.sprite-role-cto .sprite-avatar {
+  border-radius: 10px;
+}
+
+.sprite-role-cto .sprite-aura {
+  --sprite-aura-name: auraTechPulse;
+  --sprite-aura-duration: 2.4s;
+}
+
 .sprite-role-cto .sprite-flair {
   background: #cffafe;
+}
+
+.sprite-signature-cto {
+  border-style: dashed;
+  border-width: 1.4px;
+  background: conic-gradient(
+    from 180deg,
+    transparent 0deg 66deg,
+    color-mix(in srgb, var(--accent) 42%, transparent) 66deg 124deg,
+    transparent 124deg 242deg,
+    color-mix(in srgb, var(--accent) 42%, transparent) 242deg 300deg,
+    transparent 300deg 360deg
+  );
+  animation: signatureOrbit 2.4s linear infinite;
+}
+
+.sprite-role-pm {
+  --sprite-float-duration: 3.5s;
+}
+
+.sprite-role-pm .sprite-avatar {
+  border-radius: 18px;
 }
 
 .sprite-role-pm .sprite-flair {
   background: #fef3c7;
 }
 
+.sprite-signature-pm {
+  border-color: color-mix(in srgb, var(--accent) 55%, #fef3c7 45%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent) 0%, transparent 56%);
+  animation: signatureRadar 2.9s ease-out infinite;
+}
+
+.sprite-role-eng {
+  --sprite-float-name: floatGearRhythm;
+  --sprite-float-duration: 2.2s;
+}
+
+.sprite-role-eng .sprite-avatar {
+  border-radius: 11px;
+  animation: engAvatarRhythm 1.6s steps(4, end) infinite;
+}
+
 .sprite-role-eng .sprite-flair {
   background: #d1fae5;
+  animation: engFlairSpin 2.4s linear infinite;
+}
+
+.sprite-signature-eng {
+  border-radius: 16px;
+  transform: scale(0.92) rotate(45deg);
+  border-width: 1.5px;
+  animation: signatureGear 1.6s steps(4, end) infinite;
+}
+
+.sprite-role-ops {
+  --sprite-float-duration: 2.6s;
+}
+
+.sprite-role-ops .sprite-avatar {
+  border-radius: 9px;
+}
+
+.sprite-role-ops .sprite-aura {
+  --sprite-aura-name: auraLaunchPulse;
+  --sprite-aura-duration: 2.1s;
 }
 
 .sprite-role-ops .sprite-flair {
   background: #fce7f3;
+}
+
+.sprite-signature-ops {
+  width: 56px;
+  height: 92px;
+  border-color: transparent;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 34%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 24%, transparent) 42%,
+    transparent 100%
+  );
+  animation: signatureLaunchTrail 1.8s ease-in-out infinite;
+}
+
+.sprite-signature-ops::before {
+  content: '';
+  position: absolute;
+  inset: 5px 24px 18px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 72%, var(--accent) 28%) 0%,
+    color-mix(in srgb, var(--accent) 48%, transparent) 58%,
+    transparent 100%
+  );
+  filter: blur(0.6px);
+  animation: launchTrailDrift 1.8s ease-in-out infinite;
 }
 
 .floor-empty {
@@ -414,6 +531,171 @@ section {
   }
 }
 
+@keyframes signaturePulse {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.34;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 0.58;
+  }
+}
+
+@keyframes auraExecutiveGlow {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.68;
+    filter: blur(1.2px);
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+    filter: blur(1.9px);
+  }
+}
+
+@keyframes signatureExecutive {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.72;
+  }
+}
+
+@keyframes auraTechPulse {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.58;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.96;
+  }
+}
+
+@keyframes signatureOrbit {
+  0% {
+    transform: rotate(0deg) scale(0.92);
+    opacity: 0.52;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.04);
+    opacity: 0.74;
+  }
+  100% {
+    transform: rotate(360deg) scale(0.92);
+    opacity: 0.52;
+  }
+}
+
+@keyframes signatureRadar {
+  0% {
+    transform: scale(0.58);
+    opacity: 0;
+  }
+  28% {
+    opacity: 0.66;
+  }
+  100% {
+    transform: scale(1.24);
+    opacity: 0;
+  }
+}
+
+@keyframes floatGearRhythm {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+  25% {
+    transform: translate(-50%, calc(-50% - 5px));
+  }
+  50% {
+    transform: translate(-50%, calc(-50% - 2px));
+  }
+  75% {
+    transform: translate(-50%, calc(-50% - 7px));
+  }
+}
+
+@keyframes engAvatarRhythm {
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes engFlairSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes signatureGear {
+  0%,
+  100% {
+    transform: scale(0.9) rotate(45deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1) rotate(90deg);
+    opacity: 0.72;
+  }
+}
+
+@keyframes auraLaunchPulse {
+  0%,
+  100% {
+    transform: translateY(1px) scale(0.92);
+    opacity: 0.56;
+  }
+  50% {
+    transform: translateY(-5px) scale(1.08);
+    opacity: 0.96;
+  }
+}
+
+@keyframes signatureLaunchTrail {
+  0%,
+  100% {
+    transform: translateY(4px);
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 0.52;
+  }
+  60% {
+    transform: translateY(-4px);
+    opacity: 0.68;
+  }
+}
+
+@keyframes launchTrailDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.34;
+  }
+  50% {
+    transform: translateY(-9px);
+    opacity: 0.78;
+  }
+}
+
 @keyframes corridorPulse {
   0%,
   100% {
@@ -427,7 +709,11 @@ section {
 @media (prefers-reduced-motion: reduce) {
   .floor-corridor,
   .sprite,
-  .sprite-aura {
+  .sprite-aura,
+  .sprite-signature,
+  .sprite-avatar,
+  .sprite-flair,
+  .sprite-signature::before {
     animation: none;
   }
 }

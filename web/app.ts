@@ -340,6 +340,7 @@ export function renderOrgSprites(snapshot: SnapshotLike): string {
     .map(
       (persona, index) => {
         const normalizedPersona = normalizePersona(persona, index);
+        const roleToken = roleClassToken(normalizedPersona.role);
         const roleFlair = defaultRoleFlair(normalizedPersona.role);
         const xPct = normalizedPersona.coordinates.xPct;
         const yPct = normalizedPersona.coordinates.yPct;
@@ -348,10 +349,11 @@ export function renderOrgSprites(snapshot: SnapshotLike): string {
         }`;
         return `
       <div
-        class="sprite sprite-role-${roleClassToken(normalizedPersona.role)}"
+        class="sprite sprite-role-${roleToken}"
         style="${buildSpriteInlineStyle(xPct, yPct, index * 0.16, normalizedPersona.character.accentColor)}"
       >
         <span class="sprite-aura" aria-hidden="true"></span>
+        <span class="sprite-signature sprite-signature-${roleToken}" aria-hidden="true"></span>
         <span class="sprite-avatar-wrap">
           <span class="sprite-avatar" aria-hidden="true">${escapeHtml(normalizedPersona.character.avatar)}</span>
           <span class="sprite-flair" aria-hidden="true">${escapeHtml(roleFlair.flair)}</span>

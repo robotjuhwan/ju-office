@@ -71,6 +71,9 @@ describe('ui render from snapshot', () => {
     expect(floorMarkup).toContain('zone-executive');
     expect(floorMarkup).toContain('zone-build');
     expect(floorMarkup).toContain('sprite-aura');
+    expect(floorMarkup).toContain('sprite-signature');
+    expect(floorMarkup).toContain('sprite-signature-ceo');
+    expect(floorMarkup).toContain('sprite-signature-eng');
     expect(floorMarkup).toContain('sprite-flair');
     expect(floorMarkup).toContain('sprite-style-chip');
     expect(floorMarkup).toContain('sprite-role-chip');
