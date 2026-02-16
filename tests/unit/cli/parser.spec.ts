@@ -4,6 +4,28 @@ import { parseCommand } from '../../../src/cli/parser.js';
 import { JuCliError } from '../../../src/core/error-codes.js';
 
 describe('cli parser', () => {
+  it('parses setup command', () => {
+    const parsed = parseCommand(['setup']);
+
+    expect(parsed.command).toBe('setup');
+  });
+
+  it('parses autopilot command with minimal flags', () => {
+    const parsed = parseCommand([
+      'autopilot',
+      '--goal',
+      'Build web snake game MVP with score and restart flow'
+    ]);
+
+    expect(parsed.command).toBe('autopilot');
+    if (parsed.command === 'autopilot') {
+      expect(parsed.goal).toContain('snake game');
+      expect(parsed.actor).toBeUndefined();
+      expect(parsed.authToken).toBeUndefined();
+      expect(parsed.idempotencyKey).toBeUndefined();
+    }
+  });
+
   it('parses start command', () => {
     const parsed = parseCommand([
       'start',

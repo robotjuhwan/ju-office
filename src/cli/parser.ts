@@ -8,6 +8,16 @@ interface CommandSpec {
 }
 
 const commandSpecs: Record<string, CommandSpec> = {
+  setup: {
+    required: [],
+    optional: [],
+    boolean: []
+  },
+  autopilot: {
+    required: ['goal'],
+    optional: ['actor', 'auth-token', 'idempotency-key'],
+    boolean: []
+  },
   start: {
     required: ['goal', 'actor', 'auth-token', 'idempotency-key'],
     optional: [],
@@ -117,6 +127,19 @@ export function parseCommand(argv: string[]): ParsedCommand {
   const flags = parseFlags(rest, spec);
 
   switch (command) {
+    case 'setup':
+      return {
+        command
+      };
+    case 'autopilot':
+      return {
+        command,
+        goal: getString(flags, 'goal'),
+        actor: typeof flags.get('actor') === 'string' ? (flags.get('actor') as string) : undefined,
+        authToken: typeof flags.get('auth-token') === 'string' ? (flags.get('auth-token') as string) : undefined,
+        idempotencyKey:
+          typeof flags.get('idempotency-key') === 'string' ? (flags.get('idempotency-key') as string) : undefined
+      };
     case 'start':
       return {
         command,

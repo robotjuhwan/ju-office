@@ -9,6 +9,8 @@
   },
   "scripts": {
     "ju": "tsx src/cli/index.ts",
+    "ju:setup": "tsx src/cli/index.ts setup",
+    "ju:auto": "tsx src/cli/index.ts autopilot",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"{src,scripts,tests,web}/**/*.ts\"",

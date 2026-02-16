@@ -50,7 +50,7 @@ function toTokenBuffer(value: string): Buffer {
   return Buffer.from(value, 'utf8');
 }
 
-function resolveExpectedToken(config: AuthConfig, actor: string): string | null {
+export function resolveActorToken(config: AuthConfig, actor: string): string | null {
   const envVarName = config.actorTokenEnv[actor];
   if (envVarName) {
     const fromEnv = process.env[envVarName];
@@ -65,6 +65,10 @@ function resolveExpectedToken(config: AuthConfig, actor: string): string | null 
   }
 
   return null;
+}
+
+export function resolveActorTokenEnvVar(config: AuthConfig, actor: string): string | null {
+  return config.actorTokenEnv[actor] ?? null;
 }
 
 export interface AuthConfig {
@@ -140,7 +144,7 @@ export function isStatusOpen(config: AuthConfig): boolean {
 }
 
 export function isAuthTokenValid(config: AuthConfig, actor: string, token: string): boolean {
-  const expected = resolveExpectedToken(config, actor);
+  const expected = resolveActorToken(config, actor);
   if (!expected) {
     return false;
   }
@@ -155,7 +159,7 @@ export function isAuthTokenValid(config: AuthConfig, actor: string, token: strin
 }
 
 export function canActorReadStatus(config: AuthConfig, actor: string): boolean {
-  return Boolean(resolveExpectedToken(config, actor));
+  return Boolean(resolveActorToken(config, actor));
 }
 
 export function resolvePerHourLimit(config: AuthConfig, command: string): number {

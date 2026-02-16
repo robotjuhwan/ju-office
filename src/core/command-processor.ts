@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 
 import { z } from 'zod';
@@ -11,12 +12,14 @@ import { taskIdPattern, taskPrioritySchema } from '../contracts/task.contract.js
 import { parseCommand } from '../cli/parser.js';
 import type {
   ParsedCommand,
+  ParsedAutopilotCommand,
   ParsedMessageCommand,
   ParsedPauseCommand,
   ParsedQaCommand,
   ParsedReprioritizeCommand,
   ParsedReviewCommand,
   ParsedResumeCommand,
+  ParsedSetupCommand,
   ParsedStartCommand,
   ParsedStatusCommand,
   ParsedStopCommand
@@ -28,6 +31,8 @@ import {
   isAuthTokenValid,
   isStatusOpen,
   loadAuthConfig,
+  resolveActorToken,
+  resolveActorTokenEnvVar,
   resolvePerHourLimit,
   resolveProofValidationPolicy
 } from './auth.js';
@@ -55,6 +60,7 @@ import type { JuEvent } from '../types/event.js';
 import type { Run } from '../types/run.js';
 import { createEventId, createRunId } from '../utils/ids.js';
 import { nowIso } from '../utils/time.js';
+import { loadLocalEnvFile, readLocalEnv, writeLocalEnv } from './local-env.js';
 
 const startValidationSchema = z.object({
   goal: z.string().min(10).max(280),
@@ -151,10 +157,19 @@ const DISALLOWED_GOAL_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /\b(?:fraud|money\s*launder|stolen\s*card)\b/i, reason: 'financial abuse is not allowed' }
 ];
 const MAX_AUTH_FAILURES_PER_HOUR = 12;
+const DEFAULT_AUTOPILOT_ACTOR = 'investor-1';
 
 interface SuccessPayload {
   ok: true;
   data: unknown;
+}
+
+function generateToken(length = 24): string {
+  return randomBytes(length).toString('base64url');
+}
+
+function generateIdempotencyKey(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function mutationLockPath(rootDir: string, runId: string): string {
@@ -383,6 +398,86 @@ async function resolveTargetRunId(rootDir: string, explicitRunId?: string): Prom
 
   const runIndex = await readRunIndex(paths);
   return runIndex.length ? (runIndex[runIndex.length - 1] ?? null) : null;
+}
+
+async function processSetup(rootDir: string, _command: ParsedSetupCommand): Promise<SuccessPayload> {
+  const paths = resolvePaths(rootDir);
+  await initStorage(paths);
+  const authConfig = await loadAuthConfig(paths.authConfigFile);
+
+  const existingLocalEnv = await readLocalEnv(rootDir);
+  const localEnvValues: Record<string, string> = {};
+  let generatedCount = 0;
+  let reusedCount = 0;
+  let shellCount = 0;
+
+  for (const envVarName of Object.values(authConfig.actorTokenEnv)) {
+    const shellValue = process.env[envVarName];
+    if (typeof shellValue === 'string' && shellValue.length > 0) {
+      localEnvValues[envVarName] = shellValue;
+      shellCount += 1;
+      continue;
+    }
+
+    const existingValue = existingLocalEnv[envVarName];
+    if (existingValue) {
+      localEnvValues[envVarName] = existingValue;
+      process.env[envVarName] = existingValue;
+      reusedCount += 1;
+      continue;
+    }
+
+    const generated = generateToken();
+    localEnvValues[envVarName] = generated;
+    process.env[envVarName] = generated;
+    generatedCount += 1;
+  }
+
+  const envFilePath = await writeLocalEnv(rootDir, localEnvValues);
+
+  return {
+    ok: true,
+    data: {
+      envFile: path.relative(rootDir, envFilePath) || '.ju-office.env',
+      tokenVars: Object.keys(localEnvValues).sort(),
+      generatedCount,
+      reusedCount,
+      shellCount,
+      next: [
+        `npm run ju -- autopilot --goal "Build web snake game with keyboard controls and score"`,
+        'npm run ju -- status'
+      ]
+    }
+  };
+}
+
+async function processAutopilot(rootDir: string, command: ParsedAutopilotCommand): Promise<SuccessPayload> {
+  const actor = command.actor ?? DEFAULT_AUTOPILOT_ACTOR;
+  const paths = resolvePaths(rootDir);
+  await initStorage(paths);
+  const authConfig = await loadAuthConfig(paths.authConfigFile);
+
+  const authToken = command.authToken ?? resolveActorToken(authConfig, actor);
+  if (!authToken) {
+    const envVarName = resolveActorTokenEnvVar(authConfig, actor);
+    const hint = envVarName
+      ? `Missing auth token for actor ${actor}. Run "npm run ju -- setup" or set ${envVarName}.`
+      : `Missing auth token for actor ${actor}. Run "npm run ju -- setup" first.`;
+    throw new JuCliError('E_UNAUTHORIZED_ACTOR', hint, {
+      actor,
+      command: 'autopilot'
+    });
+  }
+
+  const response = await processStart(rootDir, {
+    command: 'start',
+    goal: command.goal,
+    actor,
+    authToken,
+    idempotencyKey: command.idempotencyKey ?? generateIdempotencyKey('autopilot-start')
+  });
+
+  return response;
 }
 
 async function processStart(rootDir: string, command: ParsedStartCommand): Promise<SuccessPayload> {
@@ -1137,7 +1232,13 @@ async function processStatus(
   const paths = resolvePaths(rootDir);
   await initStorage(paths);
   const authConfig = await loadAuthConfig(paths.authConfigFile);
-  enforceStatusPolicy(authConfig, actor, authToken);
+  const localEnv = await readLocalEnv(rootDir);
+  const shouldUseSetupDefaults = Object.keys(localEnv).length > 0;
+  const resolvedActor =
+    actor ?? (isStatusOpen(authConfig) || !shouldUseSetupDefaults ? undefined : DEFAULT_AUTOPILOT_ACTOR);
+  const resolvedAuthToken =
+    authToken ?? (resolvedActor ? (resolveActorToken(authConfig, resolvedActor) ?? undefined) : undefined);
+  enforceStatusPolicy(authConfig, resolvedActor, resolvedAuthToken);
 
   const targetRunId = await resolveTargetRunId(rootDir, runId);
   if (!targetRunId) {
@@ -1164,6 +1265,10 @@ async function processStatus(
 
 export async function processParsedCommand(parsed: ParsedCommand, rootDir = process.cwd()): Promise<SuccessPayload> {
   switch (parsed.command) {
+    case 'setup':
+      return processSetup(rootDir, parsed);
+    case 'autopilot':
+      return processAutopilot(rootDir, parsed);
     case 'start':
       return processStart(rootDir, parsed);
     case 'status':
@@ -1187,6 +1292,7 @@ export async function processParsedCommand(parsed: ParsedCommand, rootDir = proc
 }
 
 export async function processCommandFromArgv(argv: string[], rootDir = process.cwd()): Promise<SuccessPayload> {
+  await loadLocalEnvFile(rootDir);
   const parsed = parseCommand(argv);
   return processParsedCommand(parsed, rootDir);
 }
