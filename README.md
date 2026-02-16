@@ -59,9 +59,15 @@ npm run unlink:global
 
 - `ju init` — bootstrap minimal Ju Office project files in current directory
 - `ju setup` — create `.ju-office.env` tokens for local auth
-- `ju autopilot --goal "<text>"` — convenient start entrypoint
+- `ju autopilot --goal "<text>"` — start Ju run + (default) launch background Codex worker
 - `ju status` — show active/latest run and snapshot
 - `ju pause|resume|reprioritize|message|qa|review|stop` — advanced lifecycle controls
 
-For MVP details, see `docs/mvp-scope.md`.
+### Autopilot delegation flags
 
+- `--delegate codex` (default) → launch `codex exec` worker in background
+- `--delegate none` → only create Ju run (no external worker launch)
+- `--delegate-target-dir <path>` → directory where delegated Codex worker should run
+- `--delegate-model <model>` → optional model override for delegated Codex worker
+
+For MVP details, see `docs/mvp-scope.md`.

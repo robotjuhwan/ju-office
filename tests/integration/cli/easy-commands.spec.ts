@@ -90,4 +90,70 @@ describe('easy commands integration', () => {
       await ws.cleanup();
     }
   });
+
+  it('autopilot can launch codex delegate worker in background', async () => {
+    const ws = await createTestWorkspace();
+    const originalPath = process.env.PATH;
+    const originalDelegateDefault = process.env.JU_AUTOPILOT_DELEGATE_DEFAULT;
+
+    try {
+      const fakeBinDir = path.join(ws.rootDir, 'fake-bin');
+      await fs.mkdir(fakeBinDir, { recursive: true });
+      const fakeCodexPath = path.join(fakeBinDir, 'codex');
+      const invocationLog = path.join(ws.rootDir, 'fake-codex-invocations.log');
+
+      await fs.writeFile(
+        fakeCodexPath,
+        `#!/bin/sh
+if [ "$1" = "--version" ]; then
+  echo "codex fake 1.0.0"
+  exit 0
+fi
+echo "$@" >> "${invocationLog}"
+exit 0
+`,
+        'utf8'
+      );
+      await fs.chmod(fakeCodexPath, 0o755);
+
+      process.env.PATH = `${fakeBinDir}:${originalPath ?? ''}`;
+      process.env.JU_AUTOPILOT_DELEGATE_DEFAULT = 'none';
+
+      const setup = await runCliCommand(ws.rootDir, ['setup']);
+      expect(setup.exitCode).toBe(0);
+
+      const result = await runCliCommand(ws.rootDir, [
+        'autopilot',
+        '--goal',
+        'Build snake game with delegate smoke test',
+        '--delegate',
+        'codex'
+      ]);
+
+      expect(result.exitCode).toBe(0);
+      expect((result.stdout as any).data.delegate.mode).toBe('codex');
+      expect((result.stdout as any).data.delegate.status).toBe('started');
+      expect((result.stdout as any).data.delegate.pid).toBeGreaterThan(0);
+      expect((result.stdout as any).data.delegate.logFile).toContain('.omx');
+
+      let content = '';
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        content = await fs.readFile(invocationLog, 'utf8').catch(() => '');
+        if (content.length > 0) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      expect(content).toContain('exec');
+      expect(content).toContain('$autopilot');
+    } finally {
+      process.env.PATH = originalPath;
+      if (originalDelegateDefault) {
+        process.env.JU_AUTOPILOT_DELEGATE_DEFAULT = originalDelegateDefault;
+      } else {
+        delete process.env.JU_AUTOPILOT_DELEGATE_DEFAULT;
+      }
+      await ws.cleanup();
+    }
+  });
 });

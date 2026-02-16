@@ -19,7 +19,8 @@ Included commands:
 Security and policy constraints:
 - `init` bootstraps minimal project files (`config/auth.json`, planner templates, artifacts directory) in a new folder
 - mutating commands (`start|pause|resume|reprioritize|message|qa|review|stop`) require `--actor` + `--auth-token`
-- `autopilot` is a convenience entrypoint over `start` (defaults actor to `investor-1`, resolves token from env/local setup file, and auto-generates idempotency key)
+- `autopilot` is a convenience entrypoint over `start` (defaults actor to `investor-1`, resolves token from env/local setup file, auto-generates idempotency key)
+- `autopilot` delegates to background `codex exec` by default (`--delegate codex`), and supports `--delegate none`, `--delegate-target-dir`, `--delegate-model`
 - `setup` creates `.ju-office.env` with required actor tokens for local use
 - after `setup`, `status` can be called without auth flags (uses local defaults when `readOnlyOpen=false`)
 - actor tokens are resolved from environment variables declared in `config/auth.json > actorTokenEnv`

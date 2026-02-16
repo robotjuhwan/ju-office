@@ -26,6 +26,9 @@ export interface ParsedAutopilotCommand {
   actor?: string;
   authToken?: string;
   idempotencyKey?: string;
+  delegate?: 'none' | 'codex';
+  delegateTargetDir?: string;
+  delegateModel?: string;
 }
 
 export interface ParsedStartCommand {

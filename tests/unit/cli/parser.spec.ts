@@ -29,6 +29,33 @@ describe('cli parser', () => {
       expect(parsed.actor).toBeUndefined();
       expect(parsed.authToken).toBeUndefined();
       expect(parsed.idempotencyKey).toBeUndefined();
+      expect(parsed.delegate).toBeUndefined();
+      expect(parsed.delegateTargetDir).toBeUndefined();
+      expect(parsed.delegateModel).toBeUndefined();
+    }
+  });
+
+  it('parses autopilot command with delegate flags', () => {
+    const parsed = parseCommand([
+      'autopilot',
+      '--goal',
+      'Build snake game',
+      '--delegate',
+      'codex',
+      '--delegate-target-dir',
+      './workspace',
+      '--delegate-model',
+      'gpt-5.3-codex',
+      '--idempotency-key',
+      'autopilot-001'
+    ]);
+
+    expect(parsed.command).toBe('autopilot');
+    if (parsed.command === 'autopilot') {
+      expect(parsed.delegate).toBe('codex');
+      expect(parsed.delegateTargetDir).toBe('./workspace');
+      expect(parsed.delegateModel).toBe('gpt-5.3-codex');
+      expect(parsed.idempotencyKey).toBe('autopilot-001');
     }
   });
 

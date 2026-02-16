@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import { randomBytes } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 
 import { z } from 'zod';
@@ -68,6 +69,16 @@ const startValidationSchema = z.object({
   actor: z.string().min(1),
   authToken: z.string().min(1),
   idempotencyKey: z.string().min(1)
+});
+
+const autopilotValidationSchema = z.object({
+  goal: z.string().min(10).max(280),
+  actor: z.string().min(1).optional(),
+  authToken: z.string().min(1).optional(),
+  idempotencyKey: z.string().min(1).optional(),
+  delegate: z.enum(['none', 'codex']).optional(),
+  delegateTargetDir: z.string().min(1).optional(),
+  delegateModel: z.string().min(1).optional()
 });
 
 const reasonValidationSchema = z.object({
@@ -159,6 +170,8 @@ const DISALLOWED_GOAL_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
 ];
 const MAX_AUTH_FAILURES_PER_HOUR = 12;
 const DEFAULT_AUTOPILOT_ACTOR = 'investor-1';
+const AUTOPILOT_DELEGATE_ENV = 'JU_AUTOPILOT_DELEGATE_DEFAULT';
+const DEFAULT_AUTOPILOT_DELEGATE: 'none' | 'codex' = 'codex';
 const DEFAULT_AUTH_CONFIG = {
   mutatingActors: {
     'investor-1': ['start', 'pause', 'resume', 'reprioritize', 'message', 'qa', 'stop'],
@@ -264,12 +277,159 @@ interface SuccessPayload {
   data: unknown;
 }
 
+interface AutopilotDelegateLaunchSuccess {
+  mode: 'codex';
+  status: 'started';
+  pid: number;
+  targetDir: string;
+  logFile: string;
+  launchedAt: string;
+}
+
+interface AutopilotDelegateSkipped {
+  mode: 'none';
+  status: 'skipped';
+}
+
+type AutopilotDelegateResult = AutopilotDelegateLaunchSuccess | AutopilotDelegateSkipped;
+
 function generateToken(length = 24): string {
   return randomBytes(length).toString('base64url');
 }
 
 function generateIdempotencyKey(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function resolveAutopilotDelegateMode(commandMode?: 'none' | 'codex'): 'none' | 'codex' {
+  if (commandMode) {
+    return commandMode;
+  }
+
+  const raw = process.env[AUTOPILOT_DELEGATE_ENV]?.trim().toLowerCase();
+  if (raw === 'none' || raw === 'codex') {
+    return raw;
+  }
+
+  return DEFAULT_AUTOPILOT_DELEGATE;
+}
+
+async function assertDirectoryExists(directory: string, optionName: string): Promise<void> {
+  try {
+    const stats = await fs.stat(directory);
+    if (!stats.isDirectory()) {
+      throw new JuCliError('E_CONTRACT_VALIDATION', `${optionName} must be a directory: ${directory}`, {
+        optionName,
+        directory
+      });
+    }
+  } catch (error) {
+    if (error instanceof JuCliError) {
+      throw error;
+    }
+    throw new JuCliError('E_CONTRACT_VALIDATION', `${optionName} path does not exist: ${directory}`, {
+      optionName,
+      directory
+    });
+  }
+}
+
+async function assertCodexCliAvailable(): Promise<void> {
+  const code = await new Promise<number>((resolve, reject) => {
+    const child = spawn('codex', ['--version'], {
+      stdio: 'ignore'
+    });
+    child.once('error', (error) => {
+      reject(error);
+    });
+    child.once('close', (exitCode) => {
+      resolve(exitCode ?? 1);
+    });
+  }).catch((error) => {
+    const code =
+      error && typeof error === 'object' && 'code' in error && typeof (error as { code?: unknown }).code === 'string'
+        ? ((error as { code: string }).code as string)
+        : '';
+
+    if (code === 'ENOENT') {
+      throw new JuCliError(
+        'E_CONTRACT_VALIDATION',
+        'codex CLI is not installed. Install Codex CLI or run autopilot with --delegate none.'
+      );
+    }
+    throw error;
+  });
+
+  if (code !== 0) {
+    throw new JuCliError(
+      'E_CONTRACT_VALIDATION',
+      `codex CLI preflight failed with exit code ${code}. Run "codex --version" to verify installation.`
+    );
+  }
+}
+
+async function launchCodexAutopilotDelegate(
+  rootDir: string,
+  runId: string,
+  goal: string,
+  targetDir: string,
+  model?: string
+): Promise<AutopilotDelegateLaunchSuccess> {
+  const paths = resolvePaths(rootDir);
+  const logsDir = path.join(paths.omxDir, 'logs');
+  await fs.mkdir(logsDir, { recursive: true });
+  const logFile = path.join(logsDir, `autopilot-delegate-${runId}.log`);
+  const logHandle = await fs.open(logFile, 'a');
+
+  try {
+    const prompt = `$autopilot ${goal}`;
+    const args = ['exec', '--cd', targetDir];
+    if (model) {
+      args.push('--model', model);
+    }
+    args.push(prompt);
+
+    const child = spawn('codex', args, {
+      cwd: rootDir,
+      env: process.env,
+      detached: true,
+      stdio: ['ignore', logHandle.fd, logHandle.fd]
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      child.once('error', (error) => {
+        reject(error);
+      });
+      child.once('spawn', () => {
+        resolve();
+      });
+    }).catch((error) => {
+      const code =
+        error && typeof error === 'object' && 'code' in error && typeof (error as { code?: unknown }).code === 'string'
+          ? ((error as { code: string }).code as string)
+          : '';
+      if (code === 'ENOENT') {
+        throw new JuCliError(
+          'E_CONTRACT_VALIDATION',
+          'codex CLI is not installed. Install Codex CLI or run autopilot with --delegate none.'
+        );
+      }
+      throw error;
+    });
+
+    child.unref();
+
+    return {
+      mode: 'codex',
+      status: 'started',
+      pid: child.pid ?? -1,
+      targetDir,
+      logFile: path.relative(rootDir, logFile) || logFile,
+      launchedAt: nowIso()
+    };
+  } finally {
+    await logHandle.close();
+  }
 }
 
 async function ensureProjectInitialized(paths: ReturnType<typeof resolvePaths>): Promise<void> {
@@ -634,13 +794,25 @@ async function processSetup(rootDir: string, _command: ParsedSetupCommand): Prom
 }
 
 async function processAutopilot(rootDir: string, command: ParsedAutopilotCommand): Promise<SuccessPayload> {
-  const actor = command.actor ?? DEFAULT_AUTOPILOT_ACTOR;
+  const parsed = autopilotValidationSchema.safeParse(command);
+  if (!parsed.success) {
+    parseValidationError(parsed.error);
+  }
+
+  const delegateMode = resolveAutopilotDelegateMode(parsed.data.delegate);
+  const delegateTargetDir = path.resolve(rootDir, parsed.data.delegateTargetDir ?? '.');
+  await assertDirectoryExists(delegateTargetDir, '--delegate-target-dir');
+  if (delegateMode === 'codex') {
+    await assertCodexCliAvailable();
+  }
+
+  const actor = parsed.data.actor ?? DEFAULT_AUTOPILOT_ACTOR;
   const paths = resolvePaths(rootDir);
   await initStorage(paths);
   await ensureProjectInitialized(paths);
   const authConfig = await loadAuthConfig(paths.authConfigFile);
 
-  const authToken = command.authToken ?? resolveActorToken(authConfig, actor);
+  const authToken = parsed.data.authToken ?? resolveActorToken(authConfig, actor);
   if (!authToken) {
     const envVarName = resolveActorTokenEnvVar(authConfig, actor);
     const hint = envVarName
@@ -654,13 +826,53 @@ async function processAutopilot(rootDir: string, command: ParsedAutopilotCommand
 
   const response = await processStart(rootDir, {
     command: 'start',
-    goal: command.goal,
+    goal: parsed.data.goal,
     actor,
     authToken,
-    idempotencyKey: command.idempotencyKey ?? generateIdempotencyKey('autopilot-start')
+    idempotencyKey: parsed.data.idempotencyKey ?? generateIdempotencyKey('autopilot-start')
   });
 
-  return response;
+  const runId = (response.data as { runId?: string }).runId;
+  if (!runId) {
+    return response;
+  }
+
+  let delegate: AutopilotDelegateResult = {
+    mode: 'none',
+    status: 'skipped'
+  };
+
+  if (delegateMode === 'codex') {
+    delegate = await launchCodexAutopilotDelegate(
+      rootDir,
+      runId,
+      parsed.data.goal,
+      delegateTargetDir,
+      parsed.data.delegateModel
+    );
+  }
+
+  const existingEvents = await readEvents(paths, runId);
+  const event = await buildCommandEvent(
+    runId,
+    'autopilot',
+    actor,
+    {
+      goal: parsed.data.goal,
+      delegate
+    },
+    existingEvents.length
+  );
+  await appendEvent(paths, runId, event);
+  await buildOfficeSnapshot(paths, runId);
+
+  return {
+    ok: true,
+    data: {
+      ...(response.data as Record<string, unknown>),
+      delegate
+    }
+  };
 }
 
 async function processStart(rootDir: string, command: ParsedStartCommand): Promise<SuccessPayload> {

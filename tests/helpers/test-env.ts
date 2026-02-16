@@ -22,6 +22,7 @@ export async function createTestWorkspace(): Promise<{ rootDir: string; cleanup:
   process.env.JU_ACTOR_TOKEN_ARCHITECT_001 ??= TEST_ARCHITECT_TOKEN;
   process.env.JU_ACTOR_TOKEN_SECURITY_001 ??= TEST_SECURITY_TOKEN;
   process.env.JU_ACTOR_TOKEN_CODE_001 ??= TEST_CODE_TOKEN;
+  process.env.JU_AUTOPILOT_DELEGATE_DEFAULT ??= 'none';
 
   const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ju-office-test-'));
   const repoRoot = process.cwd();

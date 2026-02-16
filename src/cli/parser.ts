@@ -20,7 +20,7 @@ const commandSpecs: Record<string, CommandSpec> = {
   },
   autopilot: {
     required: ['goal'],
-    optional: ['actor', 'auth-token', 'idempotency-key'],
+    optional: ['actor', 'auth-token', 'idempotency-key', 'delegate', 'delegate-target-dir', 'delegate-model'],
     boolean: []
   },
   start: {
@@ -147,7 +147,12 @@ export function parseCommand(argv: string[]): ParsedCommand {
         actor: typeof flags.get('actor') === 'string' ? (flags.get('actor') as string) : undefined,
         authToken: typeof flags.get('auth-token') === 'string' ? (flags.get('auth-token') as string) : undefined,
         idempotencyKey:
-          typeof flags.get('idempotency-key') === 'string' ? (flags.get('idempotency-key') as string) : undefined
+          typeof flags.get('idempotency-key') === 'string' ? (flags.get('idempotency-key') as string) : undefined,
+        delegate: typeof flags.get('delegate') === 'string' ? (flags.get('delegate') as 'none' | 'codex') : undefined,
+        delegateTargetDir:
+          typeof flags.get('delegate-target-dir') === 'string' ? (flags.get('delegate-target-dir') as string) : undefined,
+        delegateModel:
+          typeof flags.get('delegate-model') === 'string' ? (flags.get('delegate-model') as string) : undefined
       };
     case 'start':
       return {
