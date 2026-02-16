@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-02-16T11:16:05.206Z",
+  "staleAfterSec": 300,
+  "runSummary": {
+    "runId": "run_20260216T111544Z_f3350c",
+    "goal": "Demo GitHub upload flow for Ju Office status page",
+    "status": "executing",
+    "metrics": {
+      "tasksTotal": 5,
+      "tasksDone": 1,
+      "proofsVerified": 1
+    }
+  },
+  "orgView": [
+    {
+      "personaId": "ceo-001",
+      "role": "CEO",
+      "assignmentCount": 0,
+      "objective": "Convert investor goals into executable plans and prove outcomes"
+    },
+    {
+      "personaId": "cto-001",
+      "role": "CTO",
+      "assignmentCount": 2,
+      "objective": "Own technical execution quality and delivery velocity"
+    },
+    {
+      "personaId": "pm-001",
+      "role": "PM",
+      "assignmentCount": 1,
+      "objective": "Maintain backlog clarity and investor-aligned priorities"
+    },
+    {
+      "personaId": "eng-001",
+      "role": "ENG",
+      "assignmentCount": 1,
+      "objective": "Ship deterministic code and validated artifacts"
+    },
+    {
+      "personaId": "ops-001",
+      "role": "OPS",
+      "assignmentCount": 1,
+      "objective": "Maintain docs pipeline and office visibility for investor"
+    }
+  ],
+  "taskBoard": [
+    {
+      "taskId": "TASK-001",
+      "title": "Define investor-facing value proposition",
+      "status": "ready",
+      "priority": "P0",
+      "ownerPersonaId": "cto-001",
+      "proofIds": []
+    },
+    {
+      "taskId": "TASK-002",
+      "title": "Set up deterministic engineering backlog",
+      "status": "ready",
+      "priority": "P1",
+      "ownerPersonaId": "pm-001",
+      "proofIds": []
+    },
+    {
+      "taskId": "TASK-003",
+      "title": "Implement proof-producing demo increment",
+      "status": "done",
+      "priority": "P1",
+      "ownerPersonaId": "eng-001",
+      "proofIds": [
+        "PRF-001"
+      ]
+    },
+    {
+      "taskId": "TASK-004",
+      "title": "Publish office snapshot for investor visibility",
+      "status": "ready",
+      "priority": "P2",
+      "ownerPersonaId": "ops-001",
+      "proofIds": []
+    },
+    {
+      "taskId": "TASK-005",
+      "title": "Prepare investor demo narrative",
+      "status": "ready",
+      "priority": "P2",
+      "ownerPersonaId": "cto-001",
+      "proofIds": []
+    }
+  ],
+  "commandFeed": [
+    {
+      "eventId": "EVT-20260216111544-0001",
+      "command": "start",
+      "actor": "investor-1",
+      "timestamp": "2026-02-16T11:15:44.293Z"
+    },
+    {
+      "eventId": "EVT-20260216111554-0002",
+      "command": "message",
+      "actor": "ceo-001",
+      "timestamp": "2026-02-16T11:15:54.376Z"
+    }
+  ],
+  "artifactPanel": [
+    {
+      "proofId": "PRF-001",
+      "taskId": "TASK-003",
+      "uri": "file:///Users/juhwan/Documents/Ju_Office/artifacts/github-upload-demo.txt",
+      "status": "verified",
+      "reasonCode": "E_NONE"
+    }
+  ]
+}

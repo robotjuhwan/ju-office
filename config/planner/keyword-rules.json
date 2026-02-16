@@ -1,0 +1,37 @@
+{
+  "rules": [
+    {
+      "keyword": "saas",
+      "templates": [
+        {
+          "templateId": "KW-SAAS-001",
+          "title": "Define SaaS pricing hypothesis",
+          "description": "Draft initial pricing assumptions and validation checkpoints.",
+          "priority": "P1"
+        }
+      ]
+    },
+    {
+      "keyword": "ai",
+      "templates": [
+        {
+          "templateId": "KW-AI-001",
+          "title": "Document AI model and safety assumptions",
+          "description": "Capture model usage assumptions, risks, and constraints.",
+          "priority": "P1"
+        }
+      ]
+    },
+    {
+      "keyword": "demo",
+      "templates": [
+        {
+          "templateId": "KW-DEMO-001",
+          "title": "Prepare investor demo narrative",
+          "description": "Create story flow and checkpoints for investor demo walkthrough.",
+          "priority": "P2"
+        }
+      ]
+    }
+  ]
+}

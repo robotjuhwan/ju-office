@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.omx/
+
+# Runtime state
+data/locks/
+data/runs/
+data/rate-limits.json
+data/snapshot/latest.json
+
+# Local artifacts
+artifacts/
+
+# OS/editor
+.DS_Store
+*.log

@@ -1,0 +1,28 @@
+{
+  "baseTemplates": [
+    {
+      "templateId": "TPL-001",
+      "title": "Define investor-facing value proposition",
+      "description": "Produce a concise MVP value proposition and success criteria.",
+      "priority": "P0"
+    },
+    {
+      "templateId": "TPL-002",
+      "title": "Set up deterministic engineering backlog",
+      "description": "Create backlog items for CLI, storage, and docs delivery.",
+      "priority": "P1"
+    },
+    {
+      "templateId": "TPL-003",
+      "title": "Implement proof-producing demo increment",
+      "description": "Deliver a measurable increment that can be proven with an artifact.",
+      "priority": "P1"
+    },
+    {
+      "templateId": "TPL-004",
+      "title": "Publish office snapshot for investor visibility",
+      "description": "Ensure GitHub Pages snapshot updates from persisted state.",
+      "priority": "P2"
+    }
+  ]
+}

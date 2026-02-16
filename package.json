@@ -1,0 +1,38 @@
+{
+  "name": "ju-office",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": "22.13.1"
+  },
+  "scripts": {
+    "ju": "tsx src/cli/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint \"{src,scripts,tests,web}/**/*.ts\"",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:ui": "vitest run tests/ui",
+    "snapshot:build": "tsx scripts/build-snapshot.ts",
+    "web:build": "tsx scripts/build-web.ts",
+    "docs:build": "tsx scripts/build-docs.ts",
+    "docs:validate": "tsx scripts/validate-docs-artifacts.ts",
+    "docs:publish": "tsx scripts/publish-docs.ts",
+    "ci": "npm run lint && npm run typecheck && npm run test && npm run build && npm run docs:build && npm run docs:validate"
+  },
+  "dependencies": {
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.1",
+    "@typescript-eslint/eslint-plugin": "8.11.0",
+    "@typescript-eslint/parser": "8.11.0",
+    "eslint": "9.39.2",
+    "tsx": "4.21.0",
+    "typescript": "5.6.3",
+    "vitest": "2.1.9"
+  }
+}
