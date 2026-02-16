@@ -13,6 +13,7 @@ import { parseCommand } from '../cli/parser.js';
 import type {
   ParsedCommand,
   ParsedAutopilotCommand,
+  ParsedInitCommand,
   ParsedMessageCommand,
   ParsedPauseCommand,
   ParsedQaCommand,
@@ -158,6 +159,105 @@ const DISALLOWED_GOAL_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
 ];
 const MAX_AUTH_FAILURES_PER_HOUR = 12;
 const DEFAULT_AUTOPILOT_ACTOR = 'investor-1';
+const DEFAULT_AUTH_CONFIG = {
+  mutatingActors: {
+    'investor-1': ['start', 'pause', 'resume', 'reprioritize', 'message', 'qa', 'stop'],
+    'ceo-001': ['message', 'complete-task'],
+    'architect-001': ['review'],
+    'security-001': ['review'],
+    'code-001': ['review']
+  },
+  reviewApprovers: {
+    architect: ['architect-001'],
+    security: ['security-001'],
+    code: ['code-001']
+  },
+  actorTokens: {},
+  actorTokenEnv: {
+    'investor-1': 'JU_ACTOR_TOKEN_INVESTOR_1',
+    'ceo-001': 'JU_ACTOR_TOKEN_CEO_001',
+    'architect-001': 'JU_ACTOR_TOKEN_ARCHITECT_001',
+    'security-001': 'JU_ACTOR_TOKEN_SECURITY_001',
+    'code-001': 'JU_ACTOR_TOKEN_CODE_001'
+  },
+  readOnlyOpen: false,
+  rateLimitsPerHour: {
+    defaultMutating: 6,
+    stop: 3
+  },
+  proofPolicy: {
+    httpsAllowlist: ['example.com'],
+    fetchTimeoutMs: 5000,
+    maxBytes: 20 * 1024 * 1024
+  }
+} as const;
+
+const DEFAULT_PLANNER_TEMPLATES = {
+  baseTemplates: [
+    {
+      templateId: 'TPL-001',
+      title: 'Define investor-facing value proposition',
+      description: 'Produce a concise MVP value proposition and success criteria.',
+      priority: 'P0'
+    },
+    {
+      templateId: 'TPL-002',
+      title: 'Set up deterministic engineering backlog',
+      description: 'Create backlog items for CLI, storage, and docs delivery.',
+      priority: 'P1'
+    },
+    {
+      templateId: 'TPL-003',
+      title: 'Implement proof-producing demo increment',
+      description: 'Deliver a measurable increment that can be proven with an artifact.',
+      priority: 'P1'
+    },
+    {
+      templateId: 'TPL-004',
+      title: 'Publish office snapshot for investor visibility',
+      description: 'Ensure GitHub Pages snapshot updates from persisted state.',
+      priority: 'P2'
+    }
+  ]
+} as const;
+
+const DEFAULT_PLANNER_KEYWORD_RULES = {
+  rules: [
+    {
+      keyword: 'saas',
+      templates: [
+        {
+          templateId: 'KW-SAAS-001',
+          title: 'Define SaaS pricing hypothesis',
+          description: 'Draft initial pricing assumptions and validation checkpoints.',
+          priority: 'P1'
+        }
+      ]
+    },
+    {
+      keyword: 'ai',
+      templates: [
+        {
+          templateId: 'KW-AI-001',
+          title: 'Document AI model and safety assumptions',
+          description: 'Capture model usage assumptions, risks, and constraints.',
+          priority: 'P1'
+        }
+      ]
+    },
+    {
+      keyword: 'demo',
+      templates: [
+        {
+          templateId: 'KW-DEMO-001',
+          title: 'Prepare investor demo narrative',
+          description: 'Create story flow and checkpoints for investor demo walkthrough.',
+          priority: 'P2'
+        }
+      ]
+    }
+  ]
+} as const;
 
 interface SuccessPayload {
   ok: true;
@@ -170,6 +270,46 @@ function generateToken(length = 24): string {
 
 function generateIdempotencyKey(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function ensureProjectInitialized(paths: ReturnType<typeof resolvePaths>): Promise<void> {
+  const requiredFiles = [paths.authConfigFile, paths.plannerTemplatesFile, paths.plannerKeywordRulesFile];
+  const missing: string[] = [];
+
+  for (const file of requiredFiles) {
+    try {
+      await fs.access(file);
+    } catch {
+      missing.push(path.relative(paths.rootDir, file) || file);
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new JuCliError(
+      'E_CONTRACT_VALIDATION',
+      `Ju Office project files are missing (${missing.join(', ')}). Run "ju init" first.`,
+      { missing }
+    );
+  }
+}
+
+async function writeJsonIfMissing(filePath: string, payload: unknown): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return false;
+  } catch (error) {
+    const code =
+      error && typeof error === 'object' && 'code' in error && typeof (error as { code?: unknown }).code === 'string'
+        ? ((error as { code: string }).code as string)
+        : '';
+    if (code !== 'ENOENT') {
+      throw error;
+    }
+  }
+
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  return true;
 }
 
 function mutationLockPath(rootDir: string, runId: string): string {
@@ -400,9 +540,54 @@ async function resolveTargetRunId(rootDir: string, explicitRunId?: string): Prom
   return runIndex.length ? (runIndex[runIndex.length - 1] ?? null) : null;
 }
 
+async function processInit(rootDir: string, _command: ParsedInitCommand): Promise<SuccessPayload> {
+  const paths = resolvePaths(rootDir);
+  await initStorage(paths);
+
+  const created: string[] = [];
+  const skipped: string[] = [];
+
+  const writes: Array<{ file: string; payload: unknown }> = [
+    { file: paths.authConfigFile, payload: DEFAULT_AUTH_CONFIG },
+    { file: paths.plannerTemplatesFile, payload: DEFAULT_PLANNER_TEMPLATES },
+    { file: paths.plannerKeywordRulesFile, payload: DEFAULT_PLANNER_KEYWORD_RULES }
+  ];
+
+  for (const item of writes) {
+    const wasCreated = await writeJsonIfMissing(item.file, item.payload);
+    const relative = path.relative(rootDir, item.file) || item.file;
+    if (wasCreated) {
+      created.push(relative);
+    } else {
+      skipped.push(relative);
+    }
+  }
+
+  const artifactGitKeep = path.join(paths.artifactsDir, '.gitkeep');
+  try {
+    await fs.access(artifactGitKeep);
+    skipped.push(path.relative(rootDir, artifactGitKeep));
+  } catch {
+    await fs.mkdir(paths.artifactsDir, { recursive: true });
+    await fs.writeFile(artifactGitKeep, '', 'utf8');
+    created.push(path.relative(rootDir, artifactGitKeep));
+  }
+
+  return {
+    ok: true,
+    data: {
+      rootDir,
+      created,
+      skipped,
+      next: ['ju setup', 'ju autopilot --goal "<your goal>"', 'ju status']
+    }
+  };
+}
+
 async function processSetup(rootDir: string, _command: ParsedSetupCommand): Promise<SuccessPayload> {
   const paths = resolvePaths(rootDir);
   await initStorage(paths);
+  await ensureProjectInitialized(paths);
   const authConfig = await loadAuthConfig(paths.authConfigFile);
 
   const existingLocalEnv = await readLocalEnv(rootDir);
@@ -443,10 +628,7 @@ async function processSetup(rootDir: string, _command: ParsedSetupCommand): Prom
       generatedCount,
       reusedCount,
       shellCount,
-      next: [
-        `npm run ju -- autopilot --goal "Build web snake game with keyboard controls and score"`,
-        'npm run ju -- status'
-      ]
+      next: ['ju autopilot --goal "Build web snake game with keyboard controls and score"', 'ju status']
     }
   };
 }
@@ -455,6 +637,7 @@ async function processAutopilot(rootDir: string, command: ParsedAutopilotCommand
   const actor = command.actor ?? DEFAULT_AUTOPILOT_ACTOR;
   const paths = resolvePaths(rootDir);
   await initStorage(paths);
+  await ensureProjectInitialized(paths);
   const authConfig = await loadAuthConfig(paths.authConfigFile);
 
   const authToken = command.authToken ?? resolveActorToken(authConfig, actor);
@@ -489,6 +672,7 @@ async function processStart(rootDir: string, command: ParsedStartCommand): Promi
 
   const paths = resolvePaths(rootDir);
   await initStorage(paths);
+  await ensureProjectInitialized(paths);
 
   const authConfig = await loadAuthConfig(paths.authConfigFile);
   await authorizeMutatingActor(paths, command.actor, command.authToken, 'start', authConfig);
@@ -626,6 +810,7 @@ async function processPauseOrResume(rootDir: string, command: ParsedPauseCommand
 
   const paths = resolvePaths(rootDir);
   await initStorage(paths);
+  await ensureProjectInitialized(paths);
   const authConfig = await loadAuthConfig(paths.authConfigFile);
   const actor = parsed.data.actor;
 
@@ -1265,6 +1450,8 @@ async function processStatus(
 
 export async function processParsedCommand(parsed: ParsedCommand, rootDir = process.cwd()): Promise<SuccessPayload> {
   switch (parsed.command) {
+    case 'init':
+      return processInit(rootDir, parsed);
     case 'setup':
       return processSetup(rootDir, parsed);
     case 'autopilot':

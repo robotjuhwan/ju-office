@@ -3,6 +3,7 @@
 This MVP delivers a deterministic TypeScript CLI (`ju`) with file-based orchestration state and a static GitHub Pages UI.
 
 Included commands:
+- `init`
 - `setup`
 - `autopilot`
 - `start`
@@ -16,6 +17,7 @@ Included commands:
 - `stop`
 
 Security and policy constraints:
+- `init` bootstraps minimal project files (`config/auth.json`, planner templates, artifacts directory) in a new folder
 - mutating commands (`start|pause|resume|reprioritize|message|qa|review|stop`) require `--actor` + `--auth-token`
 - `autopilot` is a convenience entrypoint over `start` (defaults actor to `investor-1`, resolves token from env/local setup file, and auto-generates idempotency key)
 - `setup` creates `.ju-office.env` with required actor tokens for local use

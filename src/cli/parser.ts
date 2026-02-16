@@ -8,6 +8,11 @@ interface CommandSpec {
 }
 
 const commandSpecs: Record<string, CommandSpec> = {
+  init: {
+    required: [],
+    optional: [],
+    boolean: []
+  },
   setup: {
     required: [],
     optional: [],
@@ -127,6 +132,10 @@ export function parseCommand(argv: string[]): ParsedCommand {
   const flags = parseFlags(rest, spec);
 
   switch (command) {
+    case 'init':
+      return {
+        command
+      };
     case 'setup':
       return {
         command

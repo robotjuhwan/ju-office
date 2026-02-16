@@ -3,14 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "ju": "dist/src/cli/index.js"
+  },
   "packageManager": "npm@10.9.2",
   "engines": {
     "node": "22.13.1"
   },
   "scripts": {
     "ju": "tsx src/cli/index.ts",
+    "ju:init": "tsx src/cli/index.ts init",
     "ju:setup": "tsx src/cli/index.ts setup",
     "ju:auto": "tsx src/cli/index.ts autopilot",
+    "link:global": "npm run build && npm link",
+    "unlink:global": "npm unlink -g ju-office",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint \"{src,scripts,tests,web}/**/*.ts\"",

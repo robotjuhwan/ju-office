@@ -4,6 +4,12 @@ import { parseCommand } from '../../../src/cli/parser.js';
 import { JuCliError } from '../../../src/core/error-codes.js';
 
 describe('cli parser', () => {
+  it('parses init command', () => {
+    const parsed = parseCommand(['init']);
+
+    expect(parsed.command).toBe('init');
+  });
+
   it('parses setup command', () => {
     const parsed = parseCommand(['setup']);
 

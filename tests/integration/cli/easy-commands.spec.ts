@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -8,6 +9,27 @@ import { readRun } from '../../../src/store/run-store.js';
 import { createTestWorkspace, runCliCommand, TEST_INVESTOR_TOKEN } from '../../helpers/test-env.js';
 
 describe('easy commands integration', () => {
+  it('init bootstraps minimal project files in an empty directory', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ju-office-init-'));
+
+    try {
+      const setupBeforeInit = await runCliCommand(rootDir, ['setup']);
+      expect(setupBeforeInit.exitCode).toBe(3);
+      expect((setupBeforeInit.stderr as any).error.code).toBe('E_CONTRACT_VALIDATION');
+      expect((setupBeforeInit.stderr as any).error.message).toContain('ju init');
+
+      const init = await runCliCommand(rootDir, ['init']);
+      expect(init.exitCode).toBe(0);
+      expect((init.stdout as any).data.created).toContain('config/auth.json');
+
+      const setupAfterInit = await runCliCommand(rootDir, ['setup']);
+      expect(setupAfterInit.exitCode).toBe(0);
+      await fs.access(path.join(rootDir, '.ju-office.env'));
+    } finally {
+      await fs.rm(rootDir, { recursive: true, force: true });
+    }
+  });
+
   it('setup writes local env file and autopilot starts with minimal flags', async () => {
     const ws = await createTestWorkspace();
     const originalInvestorToken = process.env.JU_ACTOR_TOKEN_INVESTOR_1;

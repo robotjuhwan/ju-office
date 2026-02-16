@@ -1,4 +1,5 @@
 export type JuCommandName =
+  | 'init'
   | 'setup'
   | 'autopilot'
   | 'start'
@@ -10,6 +11,10 @@ export type JuCommandName =
   | 'qa'
   | 'review'
   | 'stop';
+
+export interface ParsedInitCommand {
+  command: 'init';
+}
 
 export interface ParsedSetupCommand {
   command: 'setup';
@@ -106,6 +111,7 @@ export interface ParsedReviewCommand {
 }
 
 export type ParsedCommand =
+  | ParsedInitCommand
   | ParsedSetupCommand
   | ParsedAutopilotCommand
   | ParsedStartCommand
