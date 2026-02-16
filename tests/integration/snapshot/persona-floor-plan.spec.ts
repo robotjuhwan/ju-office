@@ -35,27 +35,27 @@ describe('snapshot persona floor plan mapping', () => {
 
       expect(byPersonaId.get('ceo-001')).toMatchObject({
         role: 'CEO',
-        character: { avatar: '👑', style: 'executive', accentColor: '#8b5cf6' },
+        character: { avatar: '👑', style: 'executive-luminary', accentColor: '#8b5cf6' },
         coordinates: { xPct: 14, yPct: 18, zone: 'Executive Suite', room: 'Strategy Desk' }
       });
       expect(byPersonaId.get('cto-001')).toMatchObject({
         role: 'CTO',
-        character: { avatar: '🧠', style: 'architect', accentColor: '#0ea5e9' },
+        character: { avatar: '🧠', style: 'systems-sage', accentColor: '#0ea5e9' },
         coordinates: { xPct: 34, yPct: 58, zone: 'Engineering Lab', room: 'Architecture Pod' }
       });
       expect(byPersonaId.get('pm-001')).toMatchObject({
         role: 'PM',
-        character: { avatar: '🗂️', style: 'planner', accentColor: '#f59e0b' },
+        character: { avatar: '🧭', style: 'roadmap-curator', accentColor: '#f59e0b' },
         coordinates: { xPct: 70, yPct: 27, zone: 'Planning Room', room: 'Backlog Board' }
       });
       expect(byPersonaId.get('eng-001')).toMatchObject({
         role: 'ENG',
-        character: { avatar: '🛠️', style: 'builder', accentColor: '#10b981' },
+        character: { avatar: '🛠️', style: 'build-artisan', accentColor: '#10b981' },
         coordinates: { xPct: 50, yPct: 74, zone: 'Build Bay', room: 'Test Bench' }
       });
       expect(byPersonaId.get('ops-001')).toMatchObject({
         role: 'OPS',
-        character: { avatar: '🚀', style: 'operator', accentColor: '#ec4899' },
+        character: { avatar: '🚀', style: 'mission-orchestrator', accentColor: '#ec4899' },
         coordinates: { xPct: 82, yPct: 63, zone: 'Ops NOC', room: 'Publish Console' }
       });
 

@@ -90,7 +90,7 @@ const roleProfileByRole: Record<
 > = {
   CEO: {
     avatar: '👑',
-    style: 'executive',
+    style: 'executive-luminary',
     accentColor: '#8b5cf6',
     zone: 'Executive Suite',
     room: 'Strategy Desk',
@@ -99,7 +99,7 @@ const roleProfileByRole: Record<
   },
   CTO: {
     avatar: '🧠',
-    style: 'architect',
+    style: 'systems-sage',
     accentColor: '#0ea5e9',
     zone: 'Engineering Lab',
     room: 'Architecture Pod',
@@ -107,8 +107,8 @@ const roleProfileByRole: Record<
     yPct: 58
   },
   PM: {
-    avatar: '🗂️',
-    style: 'planner',
+    avatar: '🧭',
+    style: 'roadmap-curator',
     accentColor: '#f59e0b',
     zone: 'Planning Room',
     room: 'Backlog Board',
@@ -117,7 +117,7 @@ const roleProfileByRole: Record<
   },
   ENG: {
     avatar: '🛠️',
-    style: 'builder',
+    style: 'build-artisan',
     accentColor: '#10b981',
     zone: 'Build Bay',
     room: 'Test Bench',
@@ -126,12 +126,46 @@ const roleProfileByRole: Record<
   },
   OPS: {
     avatar: '🚀',
-    style: 'operator',
+    style: 'mission-orchestrator',
     accentColor: '#ec4899',
     zone: 'Ops NOC',
     room: 'Publish Console',
     xPct: 82,
     yPct: 63
+  }
+};
+const roleFlairByRole: Record<
+  string,
+  {
+    flair: string;
+    title: string;
+    focus: string;
+  }
+> = {
+  CEO: {
+    flair: '✨',
+    title: 'Executive Lead',
+    focus: 'Strategy'
+  },
+  CTO: {
+    flair: '🛰️',
+    title: 'Systems Steward',
+    focus: 'Architecture'
+  },
+  PM: {
+    flair: '🗺️',
+    title: 'Planning Captain',
+    focus: 'Roadmap'
+  },
+  ENG: {
+    flair: '⚙️',
+    title: 'Implementation Ace',
+    focus: 'Build'
+  },
+  OPS: {
+    flair: '📡',
+    title: 'Launch Commander',
+    focus: 'Reliability'
   }
 };
 
@@ -156,15 +190,36 @@ function sanitizeAccentColor(value: unknown, fallback: string): string {
   return accentColorPattern.test(candidate) ? candidate : fallback;
 }
 
+function sanitizeCssTimeSeconds(value: number): string {
+  const normalized = Math.max(0, Math.min(12, safeNumber(value, 0)));
+  const rounded = Math.round(normalized * 100) / 100;
+  return `${rounded}s`;
+}
+
+function buildSpriteInlineStyle(xPct: number, yPct: number, delaySec: number, accentColor: string): string {
+  return `--x:${clampPercent(xPct)};--y:${clampPercent(yPct)};--delay:${sanitizeCssTimeSeconds(delaySec)};--accent:${sanitizeAccentColor(
+    accentColor,
+    '#64748b'
+  )}`;
+}
+
 function defaultRoleProfile(role: string): (typeof roleProfileByRole)[string] {
   return roleProfileByRole[role] ?? {
     avatar: '🧑‍💻',
-    style: 'teammate',
+    style: 'team-specialist',
     accentColor: '#64748b',
     zone: 'Main Floor',
     room: 'Shared Desk',
     xPct: 50,
     yPct: 50
+  };
+}
+
+function defaultRoleFlair(role: string): (typeof roleFlairByRole)[string] {
+  return roleFlairByRole[role] ?? {
+    flair: '🔹',
+    title: 'Team Specialist',
+    focus: 'Execution'
   };
 }
 
@@ -285,17 +340,34 @@ export function renderOrgSprites(snapshot: SnapshotLike): string {
     .map(
       (persona, index) => {
         const normalizedPersona = normalizePersona(persona, index);
+        const roleFlair = defaultRoleFlair(normalizedPersona.role);
         const xPct = normalizedPersona.coordinates.xPct;
         const yPct = normalizedPersona.coordinates.yPct;
+        const assignmentCountLabel = `${normalizedPersona.assignmentCount} assignment${
+          normalizedPersona.assignmentCount === 1 ? '' : 's'
+        }`;
         return `
       <div
         class="sprite sprite-role-${roleClassToken(normalizedPersona.role)}"
-        style="--x:${xPct};--y:${yPct};--delay:${index * 0.16}s;--accent:${normalizedPersona.character.accentColor}"
+        style="${buildSpriteInlineStyle(xPct, yPct, index * 0.16, normalizedPersona.character.accentColor)}"
       >
-        <span class="sprite-avatar" aria-hidden="true">${escapeHtml(normalizedPersona.character.avatar)}</span>
-        <span class="sprite-label">${escapeHtml(normalizedPersona.personaId)} · ${escapeHtml(normalizedPersona.character.style)}</span>
+        <span class="sprite-aura" aria-hidden="true"></span>
+        <span class="sprite-avatar-wrap">
+          <span class="sprite-avatar" aria-hidden="true">${escapeHtml(normalizedPersona.character.avatar)}</span>
+          <span class="sprite-flair" aria-hidden="true">${escapeHtml(roleFlair.flair)}</span>
+        </span>
+        <span class="sprite-nameplate">
+          <span class="sprite-label">${escapeHtml(normalizedPersona.personaId)}</span>
+          <span class="sprite-style-chip">${escapeHtml(normalizedPersona.character.style)}</span>
+        </span>
+        <span class="sprite-meta-row">
+          <span class="sprite-role-chip">${escapeHtml(normalizedPersona.role)} · ${escapeHtml(roleFlair.title)}</span>
+          <span class="sprite-focus-chip">${escapeHtml(roleFlair.focus)}</span>
+          <span class="sprite-assignment-chip">${escapeHtml(assignmentCountLabel)}</span>
+        </span>
+        <span class="sprite-objective">${escapeHtml(normalizedPersona.objective)}</span>
         <span class="sprite-coordinates">
-          ${escapeHtml(normalizedPersona.coordinates.zone)} / ${escapeHtml(normalizedPersona.coordinates.room)} · (${xPct}, ${yPct})
+          📍 ${escapeHtml(normalizedPersona.coordinates.zone)} / ${escapeHtml(normalizedPersona.coordinates.room)} · (${xPct}, ${yPct})
         </span>
       </div>
     `;

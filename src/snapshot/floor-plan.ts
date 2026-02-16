@@ -22,46 +22,46 @@ type PersonaRole = Persona['role'];
 
 const roleFloorProfiles: Record<PersonaRole, PersonaFloorProfile> = {
   CEO: {
-    character: { avatar: '👑', style: 'executive', accentColor: '#8b5cf6' },
+    character: { avatar: '👑', style: 'executive-luminary', accentColor: '#8b5cf6' },
     coordinates: { xPct: 16, yPct: 18, zone: 'Executive Suite', room: 'Strategy Desk' }
   },
   CTO: {
-    character: { avatar: '🧠', style: 'architect', accentColor: '#0ea5e9' },
+    character: { avatar: '🧠', style: 'systems-sage', accentColor: '#0ea5e9' },
     coordinates: { xPct: 34, yPct: 62, zone: 'Engineering Lab', room: 'Architecture Pod' }
   },
   PM: {
-    character: { avatar: '🗂️', style: 'planner', accentColor: '#f59e0b' },
+    character: { avatar: '🧭', style: 'roadmap-curator', accentColor: '#f59e0b' },
     coordinates: { xPct: 70, yPct: 28, zone: 'Planning Room', room: 'Backlog Board' }
   },
   ENG: {
-    character: { avatar: '🛠️', style: 'builder', accentColor: '#10b981' },
+    character: { avatar: '🛠️', style: 'build-artisan', accentColor: '#10b981' },
     coordinates: { xPct: 52, yPct: 76, zone: 'Build Bay', room: 'Test Bench' }
   },
   OPS: {
-    character: { avatar: '🚀', style: 'operator', accentColor: '#ec4899' },
+    character: { avatar: '🚀', style: 'mission-orchestrator', accentColor: '#ec4899' },
     coordinates: { xPct: 84, yPct: 64, zone: 'Ops NOC', room: 'Publish Console' }
   }
 };
 
 const explicitFloorProfilesByRoleAndId: Record<string, PersonaFloorProfile> = {
   'CEO:ceo-001': {
-    character: { avatar: '👑', style: 'executive', accentColor: '#8b5cf6' },
+    character: { avatar: '👑', style: 'executive-luminary', accentColor: '#8b5cf6' },
     coordinates: { xPct: 14, yPct: 18, zone: 'Executive Suite', room: 'Strategy Desk' }
   },
   'CTO:cto-001': {
-    character: { avatar: '🧠', style: 'architect', accentColor: '#0ea5e9' },
+    character: { avatar: '🧠', style: 'systems-sage', accentColor: '#0ea5e9' },
     coordinates: { xPct: 34, yPct: 58, zone: 'Engineering Lab', room: 'Architecture Pod' }
   },
   'PM:pm-001': {
-    character: { avatar: '🗂️', style: 'planner', accentColor: '#f59e0b' },
+    character: { avatar: '🧭', style: 'roadmap-curator', accentColor: '#f59e0b' },
     coordinates: { xPct: 70, yPct: 27, zone: 'Planning Room', room: 'Backlog Board' }
   },
   'ENG:eng-001': {
-    character: { avatar: '🛠️', style: 'builder', accentColor: '#10b981' },
+    character: { avatar: '🛠️', style: 'build-artisan', accentColor: '#10b981' },
     coordinates: { xPct: 50, yPct: 74, zone: 'Build Bay', room: 'Test Bench' }
   },
   'OPS:ops-001': {
-    character: { avatar: '🚀', style: 'operator', accentColor: '#ec4899' },
+    character: { avatar: '🚀', style: 'mission-orchestrator', accentColor: '#ec4899' },
     coordinates: { xPct: 82, yPct: 63, zone: 'Ops NOC', room: 'Publish Console' }
   }
 };

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-02-16T13:07:02.953Z",
+  "generatedAt": "2026-02-16T13:22:12.525Z",
   "staleAfterSec": 300,
   "runSummary": {
     "runId": "run_20260216T115101Z_f4d2d8",
@@ -15,7 +15,7 @@
     {
       "character": {
         "avatar": "👑",
-        "style": "executive",
+        "style": "executive-luminary",
         "accentColor": "#8b5cf6"
       },
       "coordinates": {
@@ -32,7 +32,7 @@
     {
       "character": {
         "avatar": "🧠",
-        "style": "architect",
+        "style": "systems-sage",
         "accentColor": "#0ea5e9"
       },
       "coordinates": {
@@ -48,8 +48,8 @@
     },
     {
       "character": {
-        "avatar": "🗂️",
-        "style": "planner",
+        "avatar": "🧭",
+        "style": "roadmap-curator",
         "accentColor": "#f59e0b"
       },
       "coordinates": {
@@ -66,7 +66,7 @@
     {
       "character": {
         "avatar": "🛠️",
-        "style": "builder",
+        "style": "build-artisan",
         "accentColor": "#10b981"
       },
       "coordinates": {
@@ -83,7 +83,7 @@
     {
       "character": {
         "avatar": "🚀",
-        "style": "operator",
+        "style": "mission-orchestrator",
         "accentColor": "#ec4899"
       },
       "coordinates": {

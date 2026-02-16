@@ -21,7 +21,7 @@ describe('snapshot contract', () => {
           objective: 'Lead deterministic execution',
           character: {
             avatar: '👑',
-            style: 'executive',
+            style: 'executive-luminary',
             accentColor: '#8b5cf6'
           },
           coordinates: {

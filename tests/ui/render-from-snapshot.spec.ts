@@ -16,16 +16,16 @@ const snapshot = {
       personaId: 'ceo-001',
       role: 'CEO',
       assignmentCount: 0,
-      objective: 'Lead',
-      character: { avatar: '👑', style: 'executive', accentColor: '#8b5cf6' },
+      objective: 'Lead strategy and investor confidence',
+      character: { avatar: '👑', style: 'executive-luminary', accentColor: '#8b5cf6' },
       coordinates: { xPct: 14, yPct: 18, zone: 'Executive Suite', room: 'Strategy Desk' }
     },
     {
       personaId: 'eng-001',
       role: 'ENG',
       assignmentCount: 2,
-      objective: 'Ship',
-      character: { avatar: '🛠️', style: 'builder', accentColor: '#10b981' },
+      objective: 'Ship deterministic implementation quickly',
+      character: { avatar: '🛠️', style: 'build-artisan', accentColor: '#10b981' },
       coordinates: { xPct: 50, yPct: 74, zone: 'Build Bay', room: 'Test Bench' }
     }
   ],
@@ -66,16 +66,25 @@ describe('ui render from snapshot', () => {
     expect(renderArtifactPanel(snapshot)).toContain('PRF-001');
   });
 
-  it('renders colorful floor zones and per-agent character coordinates from snapshot data', () => {
+  it('renders colorful floor zones and rich per-agent character cards from snapshot data', () => {
     const floorMarkup = renderOrgSprites(snapshot);
     expect(floorMarkup).toContain('zone-executive');
     expect(floorMarkup).toContain('zone-build');
+    expect(floorMarkup).toContain('sprite-aura');
+    expect(floorMarkup).toContain('sprite-flair');
+    expect(floorMarkup).toContain('sprite-style-chip');
+    expect(floorMarkup).toContain('sprite-role-chip');
+    expect(floorMarkup).toContain('sprite-focus-chip');
+    expect(floorMarkup).toContain('sprite-assignment-chip');
     expect(floorMarkup).toContain('👑');
     expect(floorMarkup).toContain('🛠️');
     expect(floorMarkup).toContain('--x:14;--y:18;');
     expect(floorMarkup).toContain('--x:50;--y:74;');
-    expect(floorMarkup).toContain('Executive Suite / Strategy Desk · (14, 18)');
-    expect(floorMarkup).toContain('Build Bay / Test Bench · (50, 74)');
+    expect(floorMarkup).toContain('CEO · Executive Lead');
+    expect(floorMarkup).toContain('ENG · Implementation Ace');
+    expect(floorMarkup).toContain('2 assignments');
+    expect(floorMarkup).toContain('📍 Executive Suite / Strategy Desk · (14, 18)');
+    expect(floorMarkup).toContain('📍 Build Bay / Test Bench · (50, 74)');
   });
 
   it('falls back safely when legacy orgView entries omit character/coordinates', () => {
@@ -94,6 +103,7 @@ describe('ui render from snapshot', () => {
     const floorMarkup = renderOrgSprites(legacySnapshot);
     expect(floorMarkup).toContain('legacy-001');
     expect(floorMarkup).toContain('Executive Suite / Strategy Desk');
+    expect(floorMarkup).toContain('executive-luminary');
     expect(floorMarkup).toContain('--accent:#8b5cf6');
   });
 
@@ -108,7 +118,7 @@ describe('ui render from snapshot', () => {
           objective: 'Attempt style injection',
           character: {
             avatar: '🛠️',
-            style: 'builder',
+            style: 'build-artisan',
             accentColor: '#10b981;transform:scale(99)'
           },
           coordinates: {
