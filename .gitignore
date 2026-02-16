@@ -9,7 +9,8 @@ data/rate-limits.json
 data/snapshot/latest.json
 
 # Local artifacts (runtime output only)
-/artifacts/
+/artifacts/*
+!/artifacts/.gitkeep
 
 # OS/editor
 .DS_Store
