@@ -16,6 +16,7 @@
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
     "test:ui": "vitest run tests/ui",
+    "pages:seed-demo": "tsx scripts/seed-pages-demo.ts",
     "snapshot:build": "tsx scripts/build-snapshot.ts",
     "web:build": "tsx scripts/build-web.ts",
     "docs:build": "tsx scripts/build-docs.ts",

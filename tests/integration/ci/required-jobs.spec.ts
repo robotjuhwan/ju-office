@@ -20,6 +20,12 @@ describe('ci required jobs', () => {
       expect(pages).toContain('pages_publish:');
       expect(pages).toContain('branches:');
       expect(pages).toContain('- main');
+      expect(pages).toContain('npm run pages:seed-demo');
+
+      const seedIndex = pages.indexOf('npm run pages:seed-demo');
+      const snapshotIndex = pages.indexOf('npm run snapshot:build');
+      expect(seedIndex).toBeGreaterThanOrEqual(0);
+      expect(snapshotIndex).toBeGreaterThan(seedIndex);
     } finally {
       await ws.cleanup();
     }

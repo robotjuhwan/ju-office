@@ -28,6 +28,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - run: npm run pages:seed-demo
       - run: npm run snapshot:build
       - run: npm run web:build
       - run: npm run docs:build
