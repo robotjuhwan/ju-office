@@ -8,8 +8,8 @@ data/runs/
 data/rate-limits.json
 data/snapshot/latest.json
 
-# Local artifacts
-artifacts/
+# Local artifacts (runtime output only)
+/artifacts/
 
 # OS/editor
 .DS_Store
