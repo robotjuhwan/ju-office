@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { renderArtifactPanel, renderCommandFeed, renderRunSummary, renderTaskBoard } from '../../web/app.js';
+import { renderArtifactPanel, renderCommandFeed, renderOrgSprites, renderRunSummary, renderTaskBoard } from '../../web/app.js';
 
 const snapshot = {
   generatedAt: new Date().toISOString(),
@@ -12,8 +12,22 @@ const snapshot = {
     metrics: { tasksTotal: 4, tasksDone: 1, proofsVerified: 1 }
   },
   orgView: [
-    { personaId: 'ceo-001', role: 'CEO', assignmentCount: 0, objective: 'Lead' },
-    { personaId: 'eng-001', role: 'ENG', assignmentCount: 2, objective: 'Ship' }
+    {
+      personaId: 'ceo-001',
+      role: 'CEO',
+      assignmentCount: 0,
+      objective: 'Lead',
+      character: { avatar: '👑', style: 'executive', accentColor: '#8b5cf6' },
+      coordinates: { xPct: 14, yPct: 18, zone: 'Executive Suite', room: 'Strategy Desk' }
+    },
+    {
+      personaId: 'eng-001',
+      role: 'ENG',
+      assignmentCount: 2,
+      objective: 'Ship',
+      character: { avatar: '🛠️', style: 'builder', accentColor: '#10b981' },
+      coordinates: { xPct: 50, yPct: 74, zone: 'Build Bay', room: 'Test Bench' }
+    }
   ],
   taskBoard: [
     {
@@ -50,5 +64,65 @@ describe('ui render from snapshot', () => {
     expect(renderTaskBoard(snapshot)).toContain('TASK-001');
     expect(renderCommandFeed(snapshot)).toContain('start');
     expect(renderArtifactPanel(snapshot)).toContain('PRF-001');
+  });
+
+  it('renders colorful floor zones and per-agent character coordinates from snapshot data', () => {
+    const floorMarkup = renderOrgSprites(snapshot);
+    expect(floorMarkup).toContain('zone-executive');
+    expect(floorMarkup).toContain('zone-build');
+    expect(floorMarkup).toContain('👑');
+    expect(floorMarkup).toContain('🛠️');
+    expect(floorMarkup).toContain('--x:14;--y:18;');
+    expect(floorMarkup).toContain('--x:50;--y:74;');
+    expect(floorMarkup).toContain('Executive Suite / Strategy Desk · (14, 18)');
+    expect(floorMarkup).toContain('Build Bay / Test Bench · (50, 74)');
+  });
+
+  it('falls back safely when legacy orgView entries omit character/coordinates', () => {
+    const legacySnapshot = {
+      ...snapshot,
+      orgView: [
+        {
+          personaId: 'legacy-001',
+          role: 'CEO',
+          assignmentCount: 0,
+          objective: 'Legacy payload without floor metadata'
+        }
+      ]
+    } as any;
+
+    const floorMarkup = renderOrgSprites(legacySnapshot);
+    expect(floorMarkup).toContain('legacy-001');
+    expect(floorMarkup).toContain('Executive Suite / Strategy Desk');
+    expect(floorMarkup).toContain('--accent:#8b5cf6');
+  });
+
+  it('sanitizes invalid accent colors before injecting inline styles', () => {
+    const unsafeSnapshot = {
+      ...snapshot,
+      orgView: [
+        {
+          personaId: 'unsafe-001',
+          role: 'ENG',
+          assignmentCount: 1,
+          objective: 'Attempt style injection',
+          character: {
+            avatar: '🛠️',
+            style: 'builder',
+            accentColor: '#10b981;transform:scale(99)'
+          },
+          coordinates: {
+            xPct: 50,
+            yPct: 74,
+            zone: 'Build Bay',
+            room: 'Test Bench'
+          }
+        }
+      ]
+    } as any;
+
+    const floorMarkup = renderOrgSprites(unsafeSnapshot);
+    expect(floorMarkup).toContain('--accent:#10b981');
+    expect(floorMarkup).not.toContain('scale(99)');
   });
 });

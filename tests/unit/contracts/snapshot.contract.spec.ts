@@ -13,12 +13,31 @@ describe('snapshot contract', () => {
         status: 'executing',
         metrics: { tasksTotal: 4, tasksDone: 1, proofsVerified: 1 }
       },
-      orgView: [],
+      orgView: [
+        {
+          personaId: 'ceo-001',
+          role: 'CEO',
+          assignmentCount: 1,
+          objective: 'Lead deterministic execution',
+          character: {
+            avatar: '👑',
+            style: 'executive',
+            accentColor: '#8b5cf6'
+          },
+          coordinates: {
+            xPct: 14,
+            yPct: 18,
+            zone: 'Executive Suite',
+            room: 'Strategy Desk'
+          }
+        }
+      ],
       taskBoard: [],
       commandFeed: [],
       artifactPanel: []
     });
 
     expect(parsed.staleAfterSec).toBe(300);
+    expect(parsed.orgView[0]?.coordinates.xPct).toBe(14);
   });
 });

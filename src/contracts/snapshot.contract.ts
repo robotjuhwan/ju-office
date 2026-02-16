@@ -5,6 +5,30 @@ import { taskPrioritySchema, taskStatusSchema } from './task.contract.js';
 
 export const snapshotStaleAfterSec = 300;
 
+const hexColorPattern = /^#[0-9a-fA-F]{6}$/;
+
+export const snapshotOrgCharacterSchema = z.object({
+  avatar: z.string().min(1),
+  style: z.string().min(1),
+  accentColor: z.string().regex(hexColorPattern)
+});
+
+export const snapshotOrgCoordinatesSchema = z.object({
+  xPct: z.number().int().min(0).max(100),
+  yPct: z.number().int().min(0).max(100),
+  zone: z.string().min(1),
+  room: z.string().min(1)
+});
+
+export const snapshotOrgPersonaSchema = z.object({
+  personaId: z.string(),
+  role: z.string(),
+  assignmentCount: z.number().int().nonnegative(),
+  objective: z.string(),
+  character: snapshotOrgCharacterSchema,
+  coordinates: snapshotOrgCoordinatesSchema
+});
+
 export const snapshotSchema = z.object({
   generatedAt: z.string().datetime(),
   staleAfterSec: z.number().int().positive(),
@@ -18,14 +42,7 @@ export const snapshotSchema = z.object({
       proofsVerified: z.number().int().nonnegative()
     })
   }),
-  orgView: z.array(
-    z.object({
-      personaId: z.string(),
-      role: z.string(),
-      assignmentCount: z.number().int().nonnegative(),
-      objective: z.string()
-    })
-  ),
+  orgView: z.array(snapshotOrgPersonaSchema),
   taskBoard: z.array(
     z.object({
       taskId: z.string(),

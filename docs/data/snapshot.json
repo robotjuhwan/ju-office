@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-16T11:16:05.206Z",
+  "generatedAt": "2026-02-16T13:07:02.953Z",
   "staleAfterSec": 300,
   "runSummary": {
-    "runId": "run_20260216T111544Z_f3350c",
-    "goal": "Demo GitHub upload flow for Ju Office status page",
+    "runId": "run_20260216T115101Z_f4d2d8",
+    "goal": "Seed GitHub Pages demo run with verified local proof artifact visibility",
     "status": "executing",
     "metrics": {
       "tasksTotal": 5,
@@ -13,30 +13,85 @@
   },
   "orgView": [
     {
+      "character": {
+        "avatar": "👑",
+        "style": "executive",
+        "accentColor": "#8b5cf6"
+      },
+      "coordinates": {
+        "xPct": 14,
+        "yPct": 18,
+        "zone": "Executive Suite",
+        "room": "Strategy Desk"
+      },
       "personaId": "ceo-001",
       "role": "CEO",
       "assignmentCount": 0,
       "objective": "Convert investor goals into executable plans and prove outcomes"
     },
     {
+      "character": {
+        "avatar": "🧠",
+        "style": "architect",
+        "accentColor": "#0ea5e9"
+      },
+      "coordinates": {
+        "xPct": 34,
+        "yPct": 58,
+        "zone": "Engineering Lab",
+        "room": "Architecture Pod"
+      },
       "personaId": "cto-001",
       "role": "CTO",
       "assignmentCount": 2,
       "objective": "Own technical execution quality and delivery velocity"
     },
     {
+      "character": {
+        "avatar": "🗂️",
+        "style": "planner",
+        "accentColor": "#f59e0b"
+      },
+      "coordinates": {
+        "xPct": 70,
+        "yPct": 27,
+        "zone": "Planning Room",
+        "room": "Backlog Board"
+      },
       "personaId": "pm-001",
       "role": "PM",
       "assignmentCount": 1,
       "objective": "Maintain backlog clarity and investor-aligned priorities"
     },
     {
+      "character": {
+        "avatar": "🛠️",
+        "style": "builder",
+        "accentColor": "#10b981"
+      },
+      "coordinates": {
+        "xPct": 50,
+        "yPct": 74,
+        "zone": "Build Bay",
+        "room": "Test Bench"
+      },
       "personaId": "eng-001",
       "role": "ENG",
       "assignmentCount": 1,
       "objective": "Ship deterministic code and validated artifacts"
     },
     {
+      "character": {
+        "avatar": "🚀",
+        "style": "operator",
+        "accentColor": "#ec4899"
+      },
+      "coordinates": {
+        "xPct": 82,
+        "yPct": 63,
+        "zone": "Ops NOC",
+        "room": "Publish Console"
+      },
       "personaId": "ops-001",
       "role": "OPS",
       "assignmentCount": 1,
@@ -89,23 +144,23 @@
   ],
   "commandFeed": [
     {
-      "eventId": "EVT-20260216111544-0001",
+      "eventId": "EVT-20260216115101-0001",
       "command": "start",
       "actor": "investor-1",
-      "timestamp": "2026-02-16T11:15:44.293Z"
+      "timestamp": "2026-02-16T11:51:01.713Z"
     },
     {
-      "eventId": "EVT-20260216111554-0002",
+      "eventId": "EVT-20260216115101-0002",
       "command": "message",
       "actor": "ceo-001",
-      "timestamp": "2026-02-16T11:15:54.376Z"
+      "timestamp": "2026-02-16T11:51:01.717Z"
     }
   ],
   "artifactPanel": [
     {
       "proofId": "PRF-001",
       "taskId": "TASK-003",
-      "uri": "file:///Users/juhwan/Documents/Ju_Office/artifacts/github-upload-demo.txt",
+      "uri": "file:///Users/juhwan/Documents/Ju_Office/artifacts/pages-demo/run_20260216T115101Z_f4d2d8-TASK-003.txt",
       "status": "verified",
       "reasonCode": "E_NONE"
     }

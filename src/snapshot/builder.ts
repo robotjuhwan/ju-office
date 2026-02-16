@@ -8,6 +8,7 @@ import { listProofs } from '../store/proof-store.js';
 import { readActiveRunLock } from '../store/lock-service.js';
 import { writeJsonAtomic } from '../utils/fs.js';
 import { nowIso } from '../utils/time.js';
+import { resolvePersonaFloorProfile } from './floor-plan.js';
 
 async function resolveRunId(paths: AppPaths, explicitRunId?: string): Promise<string | null> {
   if (explicitRunId) {
@@ -86,6 +87,7 @@ export async function buildOfficeSnapshot(paths: AppPaths, explicitRunId?: strin
       metrics: run.metrics
     },
     orgView: run.personas.map((persona) => ({
+      ...resolvePersonaFloorProfile(persona.id, persona.role),
       personaId: persona.id,
       role: persona.role,
       assignmentCount: assignmentCounts[persona.id] ?? 0,

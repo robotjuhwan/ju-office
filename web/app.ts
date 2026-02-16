@@ -16,6 +16,17 @@ export type SnapshotLike = {
     role: string;
     assignmentCount: number;
     objective: string;
+    character?: {
+      avatar: string;
+      style: string;
+      accentColor: string;
+    };
+    coordinates?: {
+      xPct: number;
+      yPct: number;
+      zone: string;
+      room: string;
+    };
   }>;
   taskBoard: Array<{
     taskId: string;
@@ -57,6 +68,183 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+const officeFloorZones = [
+  { cssClass: 'zone-executive', label: 'Executive Suite' },
+  { cssClass: 'zone-planning', label: 'Planning Room' },
+  { cssClass: 'zone-engineering', label: 'Engineering Lab' },
+  { cssClass: 'zone-build', label: 'Build Bay' },
+  { cssClass: 'zone-ops', label: 'Ops NOC' }
+] as const;
+const accentColorPattern = /^#[0-9a-fA-F]{6}$/;
+const roleProfileByRole: Record<
+  string,
+  {
+    avatar: string;
+    style: string;
+    accentColor: string;
+    zone: string;
+    room: string;
+    xPct: number;
+    yPct: number;
+  }
+> = {
+  CEO: {
+    avatar: '👑',
+    style: 'executive',
+    accentColor: '#8b5cf6',
+    zone: 'Executive Suite',
+    room: 'Strategy Desk',
+    xPct: 14,
+    yPct: 18
+  },
+  CTO: {
+    avatar: '🧠',
+    style: 'architect',
+    accentColor: '#0ea5e9',
+    zone: 'Engineering Lab',
+    room: 'Architecture Pod',
+    xPct: 34,
+    yPct: 58
+  },
+  PM: {
+    avatar: '🗂️',
+    style: 'planner',
+    accentColor: '#f59e0b',
+    zone: 'Planning Room',
+    room: 'Backlog Board',
+    xPct: 70,
+    yPct: 27
+  },
+  ENG: {
+    avatar: '🛠️',
+    style: 'builder',
+    accentColor: '#10b981',
+    zone: 'Build Bay',
+    room: 'Test Bench',
+    xPct: 50,
+    yPct: 74
+  },
+  OPS: {
+    avatar: '🚀',
+    style: 'operator',
+    accentColor: '#ec4899',
+    zone: 'Ops NOC',
+    room: 'Publish Console',
+    xPct: 82,
+    yPct: 63
+  }
+};
+
+function clampPercent(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function roleClassToken(role: string): string {
+  return role.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+}
+
+function safeString(value: unknown, fallback: string): string {
+  return typeof value === 'string' && value.length > 0 ? value : fallback;
+}
+
+function safeNumber(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function sanitizeAccentColor(value: unknown, fallback: string): string {
+  const candidate = safeString(value, fallback);
+  return accentColorPattern.test(candidate) ? candidate : fallback;
+}
+
+function defaultRoleProfile(role: string): (typeof roleProfileByRole)[string] {
+  return roleProfileByRole[role] ?? {
+    avatar: '🧑‍💻',
+    style: 'teammate',
+    accentColor: '#64748b',
+    zone: 'Main Floor',
+    room: 'Shared Desk',
+    xPct: 50,
+    yPct: 50
+  };
+}
+
+function normalizePersona(
+  persona: SnapshotLike['orgView'][number],
+  index: number
+): Required<SnapshotLike['orgView'][number]> {
+  const role = safeString(persona.role, 'WORKER');
+  const profile = defaultRoleProfile(role);
+  const fallbackX = clampPercent(profile.xPct + (index % 3) * 2);
+  const fallbackY = clampPercent(profile.yPct + (index % 2) * 2);
+  const coordinates = persona.coordinates;
+  const character = persona.character;
+
+  return {
+    personaId: safeString(persona.personaId, `persona-${index + 1}`),
+    role,
+    assignmentCount: Math.max(0, Math.round(safeNumber(persona.assignmentCount, 0))),
+    objective: safeString(persona.objective, 'No objective provided'),
+    character: {
+      avatar: safeString(character?.avatar, profile.avatar),
+      style: safeString(character?.style, profile.style),
+      accentColor: sanitizeAccentColor(character?.accentColor, profile.accentColor)
+    },
+    coordinates: {
+      xPct: clampPercent(safeNumber(coordinates?.xPct, fallbackX)),
+      yPct: clampPercent(safeNumber(coordinates?.yPct, fallbackY)),
+      zone: safeString(coordinates?.zone, profile.zone),
+      room: safeString(coordinates?.room, profile.room)
+    }
+  };
+}
+
+function normalizeSnapshot(raw: unknown): SnapshotLike {
+  const fallback: SnapshotLike = {
+    generatedAt: new Date().toISOString(),
+    staleAfterSec: 300,
+    runSummary: {
+      runId: 'none',
+      goal: 'No active run',
+      status: 'stopped',
+      metrics: { tasksTotal: 0, tasksDone: 0, proofsVerified: 0 }
+    },
+    orgView: [],
+    taskBoard: [],
+    commandFeed: [],
+    artifactPanel: []
+  };
+
+  if (!raw || typeof raw !== 'object') {
+    return fallback;
+  }
+
+  const value = raw as Partial<SnapshotLike>;
+  const rawRunSummary = value.runSummary ?? fallback.runSummary;
+  const rawMetrics = rawRunSummary.metrics ?? fallback.runSummary.metrics;
+
+  return {
+    generatedAt: safeString(value.generatedAt, fallback.generatedAt),
+    staleAfterSec: Math.max(1, Math.round(safeNumber(value.staleAfterSec, fallback.staleAfterSec))),
+    runSummary: {
+      runId: safeString(rawRunSummary.runId, fallback.runSummary.runId),
+      goal: safeString(rawRunSummary.goal, fallback.runSummary.goal),
+      status: safeString(rawRunSummary.status, fallback.runSummary.status),
+      metrics: {
+        tasksTotal: Math.max(0, Math.round(safeNumber(rawMetrics.tasksTotal, fallback.runSummary.metrics.tasksTotal))),
+        tasksDone: Math.max(0, Math.round(safeNumber(rawMetrics.tasksDone, fallback.runSummary.metrics.tasksDone))),
+        proofsVerified: Math.max(
+          0,
+          Math.round(safeNumber(rawMetrics.proofsVerified, fallback.runSummary.metrics.proofsVerified))
+        )
+      }
+    },
+    orgView: Array.isArray(value.orgView) ? value.orgView : fallback.orgView,
+    taskBoard: Array.isArray(value.taskBoard) ? value.taskBoard : fallback.taskBoard,
+    commandFeed: Array.isArray(value.commandFeed) ? value.commandFeed : fallback.commandFeed,
+    artifactPanel: Array.isArray(value.artifactPanel) ? value.artifactPanel : fallback.artifactPanel
+  };
+}
+
 export function renderRunSummary(snapshot: SnapshotLike): string {
   const metrics = snapshot.runSummary.metrics;
   return `
@@ -72,15 +260,50 @@ export function renderRunSummary(snapshot: SnapshotLike): string {
 }
 
 export function renderOrgSprites(snapshot: SnapshotLike): string {
-  return snapshot.orgView
+  const zonesMarkup = officeFloorZones
     .map(
-      (persona, index) => `
-      <div class="sprite ${persona.role === 'CEO' ? 'ceo' : 'worker'}" style="--x:${index};--delay:${index * 0.2}s">
-        <span class="sprite-label">${escapeHtml(persona.personaId)}</span>
+      (zone) => `
+      <div class="floor-zone ${zone.cssClass}">
+        <span class="zone-label">${escapeHtml(zone.label)}</span>
       </div>
     `
     )
     .join('');
+
+  const floorPlanMarkup = `
+    <div class="floor-plan" aria-hidden="true">
+      ${zonesMarkup}
+      <div class="floor-corridor"></div>
+    </div>
+  `;
+
+  if (snapshot.orgView.length === 0) {
+    return `${floorPlanMarkup}<div class="floor-empty">No active personas</div>`;
+  }
+
+  const spritesMarkup = snapshot.orgView
+    .map(
+      (persona, index) => {
+        const normalizedPersona = normalizePersona(persona, index);
+        const xPct = normalizedPersona.coordinates.xPct;
+        const yPct = normalizedPersona.coordinates.yPct;
+        return `
+      <div
+        class="sprite sprite-role-${roleClassToken(normalizedPersona.role)}"
+        style="--x:${xPct};--y:${yPct};--delay:${index * 0.16}s;--accent:${normalizedPersona.character.accentColor}"
+      >
+        <span class="sprite-avatar" aria-hidden="true">${escapeHtml(normalizedPersona.character.avatar)}</span>
+        <span class="sprite-label">${escapeHtml(normalizedPersona.personaId)} · ${escapeHtml(normalizedPersona.character.style)}</span>
+        <span class="sprite-coordinates">
+          ${escapeHtml(normalizedPersona.coordinates.zone)} / ${escapeHtml(normalizedPersona.coordinates.room)} · (${xPct}, ${yPct})
+        </span>
+      </div>
+    `;
+      }
+    )
+    .join('');
+
+  return `${floorPlanMarkup}<div class="sprite-layer">${spritesMarkup}</div>`;
 }
 
 export function renderTaskBoard(snapshot: SnapshotLike): string {
@@ -172,7 +395,7 @@ export async function boot(): Promise<void> {
   if (!response.ok) {
     throw new Error(`Failed to load snapshot: ${response.status}`);
   }
-  const snapshot = (await response.json()) as SnapshotLike;
+  const snapshot = normalizeSnapshot(await response.json());
   renderSnapshot(snapshot, document);
 }
 
