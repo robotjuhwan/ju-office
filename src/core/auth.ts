@@ -11,6 +11,13 @@ const DEFAULT_PROOF_TIMEOUT_MS = 5_000;
 
 const authConfigSchema = z.object({
   mutatingActors: z.record(z.string().min(1), z.array(z.string().min(1))),
+  reviewApprovers: z
+    .object({
+      architect: z.array(z.string().min(1)).min(1),
+      security: z.array(z.string().min(1)).min(1),
+      code: z.array(z.string().min(1)).min(1)
+    })
+    .optional(),
   actorTokens: z.record(z.string().min(1), z.string().min(1)).default({}),
   actorTokenEnv: z
     .record(
@@ -62,6 +69,11 @@ function resolveExpectedToken(config: AuthConfig, actor: string): string | null 
 
 export interface AuthConfig {
   mutatingActors: Record<string, string[]>;
+  reviewApprovers?: {
+    architect: string[];
+    security: string[];
+    code: string[];
+  };
   actorTokens: Record<string, string>;
   actorTokenEnv: Record<string, string>;
   readOnlyOpen: boolean;
@@ -110,6 +122,17 @@ export async function loadAuthConfig(filePath: string): Promise<AuthConfig> {
 export function isActorAuthorized(config: AuthConfig, actor: string, command: string): boolean {
   const commands = config.mutatingActors[actor] ?? [];
   return commands.includes(command);
+}
+
+export function canActorApproveReviewer(
+  config: AuthConfig,
+  actor: string,
+  reviewer: 'architect' | 'security' | 'code'
+): boolean {
+  if (!config.reviewApprovers) {
+    return false;
+  }
+  return config.reviewApprovers[reviewer]?.includes(actor) ?? false;
 }
 
 export function isStatusOpen(config: AuthConfig): boolean {

@@ -11,7 +11,21 @@ describe('snapshot contract', () => {
         runId: 'run_20260216T093000Z_ab12cd',
         goal: 'Goal text here',
         status: 'executing',
-        metrics: { tasksTotal: 4, tasksDone: 1, proofsVerified: 1 }
+        metrics: { tasksTotal: 4, tasksDone: 1, proofsVerified: 1 },
+        autopilot: {
+          phase: 'execution',
+          state: 'active',
+          qaResult: 'pending',
+          qaCyclesCompleted: 0,
+          qaMaxCycles: 5,
+          validationRoundsCompleted: 0,
+          validationMaxRounds: 3,
+          approvals: {
+            architect: 'pending',
+            security: 'pending',
+            code: 'pending'
+          }
+        }
       },
       orgView: [
         {

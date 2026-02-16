@@ -1,3 +1,6 @@
+import { access } from 'node:fs/promises';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { readRun } from '../../../src/store/run-store.js';
@@ -28,6 +31,9 @@ describe('start flow', () => {
       const tasks = await readTasks(paths, runId);
 
       expect(run).not.toBeNull();
+      expect(run?.autopilot).toBeDefined();
+      expect(run?.autopilot?.phase).toBe('execution');
+      expect(run?.autopilot?.state).toBe('active');
       expect(run?.personas.map((persona) => persona.id)).toEqual([
         'ceo-001',
         'cto-001',
@@ -37,6 +43,10 @@ describe('start flow', () => {
       ]);
       expect(tasks.length).toBeGreaterThanOrEqual(4);
       expect(tasks.length).toBeLessThanOrEqual(20);
+
+      await access(path.join(ws.rootDir, '.omx', 'plans', 'autopilot-spec.md'));
+      await access(path.join(ws.rootDir, '.omx', 'plans', 'autopilot-impl.md'));
+      await access(path.join(ws.rootDir, '.omx', 'plans', 'autopilot-checklist.md'));
     } finally {
       await ws.cleanup();
     }

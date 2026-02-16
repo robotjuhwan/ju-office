@@ -1,4 +1,13 @@
-export type JuCommandName = 'start' | 'status' | 'pause' | 'resume' | 'reprioritize' | 'message' | 'stop';
+export type JuCommandName =
+  | 'start'
+  | 'status'
+  | 'pause'
+  | 'resume'
+  | 'reprioritize'
+  | 'message'
+  | 'qa'
+  | 'review'
+  | 'stop';
 
 export interface ParsedStartCommand {
   command: 'start';
@@ -62,6 +71,26 @@ export interface ParsedStopCommand {
   idempotencyKey: string;
 }
 
+export interface ParsedQaCommand {
+  command: 'qa';
+  result: 'pass' | 'fail';
+  summary: string;
+  failureSignature?: string;
+  actor: string;
+  authToken: string;
+  idempotencyKey: string;
+}
+
+export interface ParsedReviewCommand {
+  command: 'review';
+  reviewer: 'architect' | 'security' | 'code';
+  decision: 'approve' | 'reject';
+  summary: string;
+  actor: string;
+  authToken: string;
+  idempotencyKey: string;
+}
+
 export type ParsedCommand =
   | ParsedStartCommand
   | ParsedStatusCommand
@@ -69,4 +98,6 @@ export type ParsedCommand =
   | ParsedResumeCommand
   | ParsedReprioritizeCommand
   | ParsedMessageCommand
+  | ParsedQaCommand
+  | ParsedReviewCommand
   | ParsedStopCommand;

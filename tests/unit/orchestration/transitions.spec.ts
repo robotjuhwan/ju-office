@@ -9,6 +9,7 @@ describe('run lifecycle transitions', () => {
     expect(canTransitionRun('executing', 'verifying')).toBe(true);
     expect(canTransitionRun('executing', 'blocked')).toBe(true);
     expect(canTransitionRun('paused', 'executing')).toBe(true);
+    expect(canTransitionRun('paused', 'verifying')).toBe(true);
     expect(canTransitionRun('verifying', 'completed')).toBe(true);
   });
 

@@ -6,6 +6,9 @@ export interface AppPaths {
   runsDir: string;
   locksDir: string;
   snapshotDir: string;
+  omxDir: string;
+  omxPlansDir: string;
+  omxStateDir: string;
   snapshotLatestFile: string;
   runIndexFile: string;
   rateLimitFile: string;
@@ -17,6 +20,10 @@ export interface AppPaths {
   authConfigFile: string;
   plannerTemplatesFile: string;
   plannerKeywordRulesFile: string;
+  autopilotSpecFile: string;
+  autopilotImplFile: string;
+  autopilotChecklistFile: string;
+  autopilotStateFile: string;
 }
 
 export function resolvePaths(rootDir = process.cwd()): AppPaths {
@@ -24,6 +31,9 @@ export function resolvePaths(rootDir = process.cwd()): AppPaths {
   const runsDir = path.join(dataDir, 'runs');
   const locksDir = path.join(dataDir, 'locks');
   const snapshotDir = path.join(dataDir, 'snapshot');
+  const omxDir = path.join(rootDir, '.omx');
+  const omxPlansDir = path.join(omxDir, 'plans');
+  const omxStateDir = path.join(omxDir, 'state');
   const docsDir = path.join(rootDir, 'docs');
   const docsDataDir = path.join(docsDir, 'data');
   const artifactsDir = path.join(rootDir, 'artifacts');
@@ -34,6 +44,9 @@ export function resolvePaths(rootDir = process.cwd()): AppPaths {
     runsDir,
     locksDir,
     snapshotDir,
+    omxDir,
+    omxPlansDir,
+    omxStateDir,
     snapshotLatestFile: path.join(snapshotDir, 'latest.json'),
     runIndexFile: path.join(runsDir, 'index.json'),
     rateLimitFile: path.join(dataDir, 'rate-limits.json'),
@@ -44,7 +57,11 @@ export function resolvePaths(rootDir = process.cwd()): AppPaths {
     artifactsDir,
     authConfigFile: path.join(rootDir, 'config', 'auth.json'),
     plannerTemplatesFile: path.join(rootDir, 'config', 'planner', 'templates.json'),
-    plannerKeywordRulesFile: path.join(rootDir, 'config', 'planner', 'keyword-rules.json')
+    plannerKeywordRulesFile: path.join(rootDir, 'config', 'planner', 'keyword-rules.json'),
+    autopilotSpecFile: path.join(omxPlansDir, 'autopilot-spec.md'),
+    autopilotImplFile: path.join(omxPlansDir, 'autopilot-impl.md'),
+    autopilotChecklistFile: path.join(omxPlansDir, 'autopilot-checklist.md'),
+    autopilotStateFile: path.join(omxStateDir, 'autopilot-state.json')
   };
 }
 

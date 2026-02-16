@@ -84,7 +84,25 @@ export async function buildOfficeSnapshot(paths: AppPaths, explicitRunId?: strin
       runId: run.runId,
       goal: run.goal,
       status: run.status,
-      metrics: run.metrics
+      metrics: run.metrics,
+      ...(run.autopilot
+        ? {
+            autopilot: {
+              phase: run.autopilot.phase,
+              state: run.autopilot.state,
+              qaResult: run.autopilot.qa.result,
+              qaCyclesCompleted: run.autopilot.qa.cyclesCompleted,
+              qaMaxCycles: run.autopilot.qa.maxCycles,
+              validationRoundsCompleted: run.autopilot.validation.roundsCompleted,
+              validationMaxRounds: run.autopilot.validation.maxRounds,
+              approvals: {
+                architect: run.autopilot.reviews.architect.decision,
+                security: run.autopilot.reviews.security.decision,
+                code: run.autopilot.reviews.code.decision
+              }
+            }
+          }
+        : {})
     },
     orgView: run.personas.map((persona) => ({
       ...resolvePersonaFloorProfile(persona.id, persona.role),

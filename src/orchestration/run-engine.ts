@@ -4,6 +4,7 @@ import { canCompleteRun } from '../artifacts/proof-gate.js';
 import { canTransitionRun } from '../domain/run-lifecycle.js';
 import { buildDefaultPersonas, workerPersonaIds } from './org-builder.js';
 import { buildPlanSeeds } from './ceo-planner.js';
+import { createAutopilotMetadata, hasAutopilotCompletionApproval, syncAutopilotLifecycle } from './autopilot-lifecycle.js';
 import { isReadyForVerification, shouldBlockExecution, updateRunMetrics } from './scheduler.js';
 import type { Run, RunStatus } from '../types/run.js';
 import type { Task } from '../types/task.js';
@@ -16,10 +17,10 @@ export interface StartRunResult {
   tasks: Task[];
 }
 
-export async function initializeRun(goal: string, paths: AppPaths): Promise<StartRunResult> {
+export async function initializeRun(goal: string, paths: AppPaths, runId = createRunId()): Promise<StartRunResult> {
   const now = nowIso();
-  const runId = createRunId();
   const personas = buildDefaultPersonas();
+  const autopilot = await createAutopilotMetadata(paths, runId, goal, now);
 
   let run: Run = {
     runId,
@@ -32,7 +33,8 @@ export async function initializeRun(goal: string, paths: AppPaths): Promise<Star
       tasksTotal: 0,
       tasksDone: 0,
       proofsVerified: 0
-    }
+    },
+    autopilot
   };
 
   run = transitionRun(run, 'planning');
@@ -61,6 +63,7 @@ export async function initializeRun(goal: string, paths: AppPaths): Promise<Star
 
   run = transitionRun(run, 'executing');
   run = updateRunMetrics(run, tasks, 0);
+  run = syncAutopilotLifecycle(run);
   runSchema.parse(run);
 
   return { run, tasks };
@@ -71,7 +74,7 @@ export function transitionRun(run: Run, nextStatus: RunStatus, reason?: string):
     throw new Error(`Invalid run transition from ${run.status} to ${nextStatus}`);
   }
 
-  const next: Run = {
+  let next: Run = {
     ...run,
     status: nextStatus,
     updatedAt: nowIso()
@@ -90,6 +93,7 @@ export function transitionRun(run: Run, nextStatus: RunStatus, reason?: string):
     next.failureReason = reason;
   }
 
+  next = syncAutopilotLifecycle(next);
   runSchema.parse(next);
   return next;
 }
@@ -108,9 +112,11 @@ export function evaluateRunProgress(run: Run, tasks: Task[], proofsVerified: num
   }
 
   if (nextRun.status === 'verifying' && canCompleteRun(nextRun.metrics.tasksDone, nextRun.metrics.proofsVerified)) {
-    nextRun = transitionRun(nextRun, 'completed');
+    const isAutopilotApproved = nextRun.autopilot ? hasAutopilotCompletionApproval(nextRun.autopilot) : true;
+    if (isAutopilotApproved) {
+      nextRun = transitionRun(nextRun, 'completed');
+    }
   }
 
-  return nextRun;
+  return syncAutopilotLifecycle(nextRun);
 }
-

@@ -30,6 +30,59 @@ export const runMetricsSchema = z.object({
   proofsVerified: z.number().int().nonnegative()
 });
 
+export const autopilotPhaseSchema = z.enum(['expansion', 'planning', 'execution', 'qa', 'validation', 'complete']);
+
+export const autopilotStateSchema = z.enum([
+  'active',
+  'awaiting_qa',
+  'qa_failed',
+  'awaiting_review',
+  'rejected',
+  'approved',
+  'complete'
+]);
+
+export const autopilotQaResultSchema = z.enum(['pending', 'pass', 'fail']);
+
+export const autopilotReviewDecisionSchema = z.enum(['pending', 'approve', 'reject']);
+
+export const autopilotReviewSchema = z.object({
+  decision: autopilotReviewDecisionSchema,
+  summary: z.string().min(3).max(280).optional(),
+  actor: z.string().min(1).optional(),
+  updatedAt: z.string().datetime().optional()
+});
+
+export const runAutopilotSchema = z.object({
+  phase: autopilotPhaseSchema,
+  state: autopilotStateSchema,
+  qa: z.object({
+    result: autopilotQaResultSchema,
+    cyclesCompleted: z.number().int().nonnegative(),
+    maxCycles: z.number().int().positive(),
+    repeatedFailureCount: z.number().int().nonnegative(),
+    summary: z.string().min(3).max(280).optional(),
+    failureSignature: z.string().min(3).max(160).optional(),
+    actor: z.string().min(1).optional(),
+    updatedAt: z.string().datetime().optional()
+  }),
+  validation: z.object({
+    roundsCompleted: z.number().int().nonnegative(),
+    maxRounds: z.number().int().positive()
+  }),
+  reviews: z.object({
+    architect: autopilotReviewSchema,
+    security: autopilotReviewSchema,
+    code: autopilotReviewSchema
+  }),
+  planFiles: z.object({
+    spec: z.string().min(1),
+    implementation: z.string().min(1),
+    checklist: z.string().min(1)
+  }),
+  updatedAt: z.string().datetime()
+});
+
 export const runSchema = z
   .object({
     runId: z.string().regex(runIdPattern),
@@ -42,7 +95,8 @@ export const runSchema = z
     pauseReason: z.string().optional(),
     blockedReason: z.string().optional(),
     stopReason: z.string().optional(),
-    failureReason: z.string().optional()
+    failureReason: z.string().optional(),
+    autopilot: runAutopilotSchema.optional()
   })
   .superRefine((run, ctx) => {
     const ceoCount = run.personas.filter((persona) => persona.role === 'CEO').length;

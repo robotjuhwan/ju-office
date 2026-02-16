@@ -1,14 +1,28 @@
 {
-  "generatedAt": "2026-02-16T13:22:12.525Z",
+  "generatedAt": "2026-02-16T15:37:48.737Z",
   "staleAfterSec": 300,
   "runSummary": {
-    "runId": "run_20260216T115101Z_f4d2d8",
+    "runId": "run_20260216T150129Z_cb4c3b",
     "goal": "Seed GitHub Pages demo run with verified local proof artifact visibility",
     "status": "executing",
     "metrics": {
       "tasksTotal": 5,
       "tasksDone": 1,
       "proofsVerified": 1
+    },
+    "autopilot": {
+      "phase": "execution",
+      "state": "active",
+      "qaResult": "pending",
+      "qaCyclesCompleted": 0,
+      "qaMaxCycles": 5,
+      "validationRoundsCompleted": 0,
+      "validationMaxRounds": 3,
+      "approvals": {
+        "architect": "pending",
+        "security": "pending",
+        "code": "pending"
+      }
     }
   },
   "orgView": [
@@ -144,23 +158,23 @@
   ],
   "commandFeed": [
     {
-      "eventId": "EVT-20260216115101-0001",
+      "eventId": "EVT-20260216150129-0001",
       "command": "start",
       "actor": "investor-1",
-      "timestamp": "2026-02-16T11:51:01.713Z"
+      "timestamp": "2026-02-16T15:01:29.798Z"
     },
     {
-      "eventId": "EVT-20260216115101-0002",
+      "eventId": "EVT-20260216150129-0002",
       "command": "message",
       "actor": "ceo-001",
-      "timestamp": "2026-02-16T11:51:01.717Z"
+      "timestamp": "2026-02-16T15:01:29.805Z"
     }
   ],
   "artifactPanel": [
     {
       "proofId": "PRF-001",
       "taskId": "TASK-003",
-      "uri": "file:///Users/juhwan/Documents/Ju_Office/artifacts/pages-demo/run_20260216T115101Z_f4d2d8-TASK-003.txt",
+      "uri": "file:///Users/juhwan/Documents/Ju_Office/artifacts/pages-demo/run_20260216T150129Z_cb4c3b-TASK-003.txt",
       "status": "verified",
       "reasonCode": "E_NONE"
     }

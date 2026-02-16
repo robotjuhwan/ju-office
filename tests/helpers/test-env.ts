@@ -7,6 +7,9 @@ import { exitCodeByError, normalizeError, toErrorPayload } from '../../src/core/
 
 export const TEST_INVESTOR_TOKEN = 'token-investor-1';
 export const TEST_CEO_TOKEN = 'token-ceo-001';
+export const TEST_ARCHITECT_TOKEN = 'token-architect-001';
+export const TEST_SECURITY_TOKEN = 'token-security-001';
+export const TEST_CODE_TOKEN = 'token-code-001';
 
 async function copyIfExists(source: string, target: string): Promise<void> {
   await fs.mkdir(path.dirname(target), { recursive: true });
@@ -16,6 +19,9 @@ async function copyIfExists(source: string, target: string): Promise<void> {
 export async function createTestWorkspace(): Promise<{ rootDir: string; cleanup: () => Promise<void> }> {
   process.env.JU_ACTOR_TOKEN_INVESTOR_1 ??= TEST_INVESTOR_TOKEN;
   process.env.JU_ACTOR_TOKEN_CEO_001 ??= TEST_CEO_TOKEN;
+  process.env.JU_ACTOR_TOKEN_ARCHITECT_001 ??= TEST_ARCHITECT_TOKEN;
+  process.env.JU_ACTOR_TOKEN_SECURITY_001 ??= TEST_SECURITY_TOKEN;
+  process.env.JU_ACTOR_TOKEN_CODE_001 ??= TEST_CODE_TOKEN;
 
   const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ju-office-test-'));
   const repoRoot = process.cwd();

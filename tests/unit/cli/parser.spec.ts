@@ -27,6 +27,52 @@ describe('cli parser', () => {
     expect(() => parseCommand(['status', '--unknown', 'x'])).toThrowError(JuCliError);
   });
 
+  it('parses qa command', () => {
+    const parsed = parseCommand([
+      'qa',
+      '--result',
+      'pass',
+      '--summary',
+      'QA cycle passed with all tests green',
+      '--actor',
+      'investor-1',
+      '--auth-token',
+      'token-investor-1',
+      '--idempotency-key',
+      'qa-001'
+    ]);
+
+    expect(parsed.command).toBe('qa');
+    if (parsed.command === 'qa') {
+      expect(parsed.result).toBe('pass');
+      expect(parsed.summary).toContain('all tests green');
+    }
+  });
+
+  it('parses review command', () => {
+    const parsed = parseCommand([
+      'review',
+      '--reviewer',
+      'security',
+      '--decision',
+      'approve',
+      '--summary',
+      'Security review approved with no blockers',
+      '--actor',
+      'investor-1',
+      '--auth-token',
+      'token-investor-1',
+      '--idempotency-key',
+      'review-001'
+    ]);
+
+    expect(parsed.command).toBe('review');
+    if (parsed.command === 'review') {
+      expect(parsed.reviewer).toBe('security');
+      expect(parsed.decision).toBe('approve');
+    }
+  });
+
   it('enforces complete-task required syntax at validation layer only', () => {
     const parsed = parseCommand([
       'message',

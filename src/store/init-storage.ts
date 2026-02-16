@@ -6,6 +6,9 @@ export async function initStorage(paths: AppPaths): Promise<void> {
   await ensureDir(paths.runsDir);
   await ensureDir(paths.locksDir);
   await ensureDir(paths.snapshotDir);
+  await ensureDir(paths.omxDir);
+  await ensureDir(paths.omxPlansDir);
+  await ensureDir(paths.omxStateDir);
   await ensureDir(paths.docsDir);
   await ensureDir(paths.docsDataDir);
   await ensureDir(paths.artifactsDir);

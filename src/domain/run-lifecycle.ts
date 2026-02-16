@@ -7,7 +7,7 @@ const transitionMap: Record<RunStatus, RunStatus[]> = {
   planning: ['executing', 'paused', 'stopped', 'failed'],
   executing: ['verifying', 'blocked', 'paused', 'stopped', 'failed'],
   verifying: ['completed', 'blocked', 'failed', 'paused', 'stopped'],
-  paused: ['executing', 'stopped', 'failed'],
+  paused: ['executing', 'verifying', 'stopped', 'failed'],
   blocked: ['executing', 'paused', 'stopped', 'failed'],
   stopped: [],
   failed: [],

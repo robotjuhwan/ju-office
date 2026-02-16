@@ -9,6 +9,11 @@ import { runCliCommand, createTestWorkspace } from '../../helpers/test-env.js';
 
 interface AuthConfigShape {
   mutatingActors: Record<string, string[]>;
+  reviewApprovers?: {
+    architect: string[];
+    security: string[];
+    code: string[];
+  };
   actorTokens?: Record<string, string>;
   actorTokenEnv?: Record<string, string>;
   readOnlyOpen: boolean;

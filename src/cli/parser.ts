@@ -38,6 +38,16 @@ const commandSpecs: Record<string, CommandSpec> = {
     optional: ['task-id', 'proof-uri', 'proof-sha256'],
     boolean: ['complete-task']
   },
+  qa: {
+    required: ['result', 'summary', 'actor', 'auth-token', 'idempotency-key'],
+    optional: ['failure-signature'],
+    boolean: []
+  },
+  review: {
+    required: ['reviewer', 'decision', 'summary', 'actor', 'auth-token', 'idempotency-key'],
+    optional: [],
+    boolean: []
+  },
   stop: {
     required: ['reason', 'actor', 'auth-token', 'idempotency-key'],
     optional: [],
@@ -165,6 +175,27 @@ export function parseCommand(argv: string[]): ParsedCommand {
       return {
         command,
         reason: getString(flags, 'reason'),
+        actor: getString(flags, 'actor'),
+        authToken: getString(flags, 'auth-token'),
+        idempotencyKey: getString(flags, 'idempotency-key')
+      };
+    case 'qa':
+      return {
+        command,
+        result: getString(flags, 'result') as 'pass' | 'fail',
+        summary: getString(flags, 'summary'),
+        failureSignature:
+          typeof flags.get('failure-signature') === 'string' ? (flags.get('failure-signature') as string) : undefined,
+        actor: getString(flags, 'actor'),
+        authToken: getString(flags, 'auth-token'),
+        idempotencyKey: getString(flags, 'idempotency-key')
+      };
+    case 'review':
+      return {
+        command,
+        reviewer: getString(flags, 'reviewer') as 'architect' | 'security' | 'code',
+        decision: getString(flags, 'decision') as 'approve' | 'reject',
+        summary: getString(flags, 'summary'),
         actor: getString(flags, 'actor'),
         authToken: getString(flags, 'auth-token'),
         idempotencyKey: getString(flags, 'idempotency-key')

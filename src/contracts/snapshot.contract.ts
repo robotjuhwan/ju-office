@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { runStatusSchema } from './run.contract.js';
+import {
+  autopilotPhaseSchema,
+  autopilotQaResultSchema,
+  autopilotReviewDecisionSchema,
+  autopilotStateSchema,
+  runStatusSchema
+} from './run.contract.js';
 import { taskPrioritySchema, taskStatusSchema } from './task.contract.js';
 
 export const snapshotStaleAfterSec = 300;
@@ -40,7 +46,23 @@ export const snapshotSchema = z.object({
       tasksTotal: z.number().int().nonnegative(),
       tasksDone: z.number().int().nonnegative(),
       proofsVerified: z.number().int().nonnegative()
-    })
+    }),
+    autopilot: z
+      .object({
+        phase: autopilotPhaseSchema,
+        state: autopilotStateSchema,
+        qaResult: autopilotQaResultSchema,
+        qaCyclesCompleted: z.number().int().nonnegative(),
+        qaMaxCycles: z.number().int().positive(),
+        validationRoundsCompleted: z.number().int().nonnegative(),
+        validationMaxRounds: z.number().int().positive(),
+        approvals: z.object({
+          architect: autopilotReviewDecisionSchema,
+          security: autopilotReviewDecisionSchema,
+          code: autopilotReviewDecisionSchema
+        })
+      })
+      .optional()
   }),
   orgView: z.array(snapshotOrgPersonaSchema),
   taskBoard: z.array(
