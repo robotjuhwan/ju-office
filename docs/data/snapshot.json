@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-02-16T15:37:48.737Z",
+  "generatedAt": "2026-02-17T00:43:04.287Z",
   "staleAfterSec": 300,
   "runSummary": {
-    "runId": "run_20260216T150129Z_cb4c3b",
-    "goal": "Seed GitHub Pages demo run with verified local proof artifact visibility",
-    "status": "executing",
+    "runId": "run_20260216T160442Z_ff8d74",
+    "goal": "Build web snake game MVP with keyboard controls, score and restart",
+    "status": "stopped",
     "metrics": {
-      "tasksTotal": 5,
-      "tasksDone": 1,
-      "proofsVerified": 1
+      "tasksTotal": 4,
+      "tasksDone": 0,
+      "proofsVerified": 0
     },
     "autopilot": {
       "phase": "execution",
@@ -57,7 +57,7 @@
       },
       "personaId": "cto-001",
       "role": "CTO",
-      "assignmentCount": 2,
+      "assignmentCount": 1,
       "objective": "Own technical execution quality and delivery velocity"
     },
     {
@@ -132,12 +132,10 @@
     {
       "taskId": "TASK-003",
       "title": "Implement proof-producing demo increment",
-      "status": "done",
+      "status": "ready",
       "priority": "P1",
       "ownerPersonaId": "eng-001",
-      "proofIds": [
-        "PRF-001"
-      ]
+      "proofIds": []
     },
     {
       "taskId": "TASK-004",
@@ -146,37 +144,21 @@
       "priority": "P2",
       "ownerPersonaId": "ops-001",
       "proofIds": []
-    },
-    {
-      "taskId": "TASK-005",
-      "title": "Prepare investor demo narrative",
-      "status": "ready",
-      "priority": "P2",
-      "ownerPersonaId": "cto-001",
-      "proofIds": []
     }
   ],
   "commandFeed": [
     {
-      "eventId": "EVT-20260216150129-0001",
+      "eventId": "EVT-20260216160442-0001",
       "command": "start",
       "actor": "investor-1",
-      "timestamp": "2026-02-16T15:01:29.798Z"
+      "timestamp": "2026-02-16T16:04:42.817Z"
     },
     {
-      "eventId": "EVT-20260216150129-0002",
-      "command": "message",
-      "actor": "ceo-001",
-      "timestamp": "2026-02-16T15:01:29.805Z"
+      "eventId": "EVT-20260216160453-0002",
+      "command": "stop",
+      "actor": "investor-1",
+      "timestamp": "2026-02-16T16:04:53.688Z"
     }
   ],
-  "artifactPanel": [
-    {
-      "proofId": "PRF-001",
-      "taskId": "TASK-003",
-      "uri": "file:///Users/juhwan/Documents/Ju_Office/artifacts/pages-demo/run_20260216T150129Z_cb4c3b-TASK-003.txt",
-      "status": "verified",
-      "reasonCode": "E_NONE"
-    }
-  ]
+  "artifactPanel": []
 }

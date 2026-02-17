@@ -10,8 +10,13 @@
     <header>
       <h1>Ju Office</h1>
       <p>Investor command → execution → proof.</p>
-      <span id="stale-badge" class="badge">Loading...</span>
-    </header>
+        <div class="header-meta">
+          <span id="stale-badge" class="badge">Loading...</span>
+          <span id="refresh-badge" class="meta-badge">Auto refresh in 30s</span>
+        </div>
+        <div id="snapshot-age" class="meta-label"></div>
+        <div id="visibility-channel" class="visibility-channel" aria-live="polite"></div>
+      </header>
 
     <main id="app-root">
       <section>

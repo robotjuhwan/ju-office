@@ -5,6 +5,20 @@ export type SnapshotLike = {
     runId: string;
     goal: string;
     status: string;
+    autopilot?: {
+      phase?: string;
+      state?: string;
+      qaResult?: string;
+      qaCyclesCompleted?: number;
+      qaMaxCycles?: number;
+      validationRoundsCompleted?: number;
+      validationMaxRounds?: number;
+      approvals?: {
+        architect?: string;
+        security?: string;
+        code?: string;
+      };
+    };
     metrics: {
       tasksTotal: number;
       tasksDone: number;
@@ -51,12 +65,71 @@ export type SnapshotLike = {
   }>;
 };
 
+const SNAPSHOT_PATH = './data/snapshot.json';
+const POLL_INTERVAL_MS = 30_000;
+const MAX_REFRESH_LABEL_SECONDS = 120;
+
 export function computeIsStale(snapshot: SnapshotLike, nowMs = Date.now()): boolean {
   const generatedMs = Date.parse(snapshot.generatedAt);
   if (Number.isNaN(generatedMs)) {
     return true;
   }
   return nowMs - generatedMs > snapshot.staleAfterSec * 1000;
+}
+
+function formatTimeAgo(timestamp: string, nowMs = Date.now()): string {
+  const valueMs = Date.parse(timestamp);
+  if (Number.isNaN(valueMs)) {
+    return 'unknown update time';
+  }
+
+  const deltaSeconds = Math.max(0, Math.floor((nowMs - valueMs) / 1000));
+  if (deltaSeconds < 5) {
+    return 'just now';
+  }
+
+  if (deltaSeconds < 60) {
+    return `${deltaSeconds}s ago`;
+  }
+
+  const deltaMinutes = Math.floor(deltaSeconds / 60);
+  if (deltaMinutes < 60) {
+    return `${deltaMinutes}m ago`;
+  }
+
+  const deltaHours = Math.floor(deltaMinutes / 60);
+  return `${deltaHours}h ago`;
+}
+
+function updateRefreshMeta(
+  stale: boolean,
+  generatedAt: string,
+  refreshSecRemaining: number,
+  isError: boolean,
+  docRoot: Document
+): void {
+  const staleBadge = docRoot.getElementById('stale-badge');
+  if (staleBadge) {
+    staleBadge.textContent = isError ? 'ERROR' : stale ? 'STALE' : 'LIVE';
+    staleBadge.className = `badge ${isError ? 'error' : stale ? 'stale' : 'live'}`;
+  }
+
+  const refreshBadge = docRoot.getElementById('refresh-badge');
+  if (refreshBadge) {
+    refreshBadge.textContent = isError ? 'Auto refresh paused' : `Auto refresh in ${Math.max(0, refreshSecRemaining)}s`;
+    refreshBadge.className = `meta-badge ${isError ? 'error' : ''}`;
+  }
+
+  const ageLabel = docRoot.getElementById('snapshot-age');
+  if (ageLabel) {
+    ageLabel.textContent = isError
+      ? 'Snapshot load failed. Keeping last known state.'
+      : `Snapshot updated ${formatTimeAgo(generatedAt)}.`;
+  }
+}
+
+function remainingSeconds(nextAtMs: number, nowMs: number): number {
+  return Math.max(0, Math.round((nextAtMs - nowMs) / 1000));
 }
 
 function escapeHtml(value: string): string {
@@ -223,6 +296,27 @@ function defaultRoleFlair(role: string): (typeof roleFlairByRole)[string] {
   };
 }
 
+function collectZoneLoad(snapshot: SnapshotLike): Array<{ label: string; count: number }> {
+  const loadByZone = new Map<string, number>();
+
+  for (const zone of officeFloorZones) {
+    loadByZone.set(zone.label, 0);
+  }
+
+  const personas = Array.isArray(snapshot.orgView) ? snapshot.orgView : [];
+  for (const persona of personas) {
+    const normalized = normalizePersona(persona, 0);
+    const zone = normalized.coordinates.zone;
+    const current = loadByZone.get(zone) ?? 0;
+    loadByZone.set(zone, current + 1);
+  }
+
+  return officeFloorZones.map((zone) => ({
+    label: zone.label,
+    count: loadByZone.get(zone.label) ?? 0
+  }));
+}
+
 function normalizePersona(
   persona: SnapshotLike['orgView'][number],
   index: number
@@ -261,6 +355,10 @@ function normalizeSnapshot(raw: unknown): SnapshotLike {
       runId: 'none',
       goal: 'No active run',
       status: 'stopped',
+      autopilot: {
+        phase: 'none',
+        state: 'stale'
+      },
       metrics: { tasksTotal: 0, tasksDone: 0, proofsVerified: 0 }
     },
     orgView: [],
@@ -284,6 +382,7 @@ function normalizeSnapshot(raw: unknown): SnapshotLike {
       runId: safeString(rawRunSummary.runId, fallback.runSummary.runId),
       goal: safeString(rawRunSummary.goal, fallback.runSummary.goal),
       status: safeString(rawRunSummary.status, fallback.runSummary.status),
+      autopilot: typeof rawRunSummary.autopilot === 'object' && rawRunSummary.autopilot !== null ? rawRunSummary.autopilot : fallback.runSummary.autopilot,
       metrics: {
         tasksTotal: Math.max(0, Math.round(safeNumber(rawMetrics.tasksTotal, fallback.runSummary.metrics.tasksTotal))),
         tasksDone: Math.max(0, Math.round(safeNumber(rawMetrics.tasksDone, fallback.runSummary.metrics.tasksDone))),
@@ -314,6 +413,56 @@ export function renderRunSummary(snapshot: SnapshotLike): string {
   `;
 }
 
+function renderVisibilityStream(snapshot: SnapshotLike, previousSnapshot: SnapshotLike | undefined): string {
+  const stream: string[] = [];
+  const latestEvent = snapshot.commandFeed[0];
+  const currentDone = snapshot.runSummary.metrics.tasksDone;
+  const previousDone = previousSnapshot?.runSummary.metrics.tasksDone ?? currentDone;
+  const currentProofs = snapshot.artifactPanel.length;
+  const previousProofs = previousSnapshot?.artifactPanel.length ?? currentProofs;
+  const deltaDone = Math.max(0, currentDone - previousDone);
+  const deltaProofs = Math.max(0, currentProofs - previousProofs);
+  const busiestZone = collectZoneLoad(snapshot).sort((a, b) => b.count - a.count)[0];
+
+  const autopilotState = snapshot.runSummary.autopilot;
+  const phase = safeString(autopilotState?.phase, 'idle');
+  const autopilotStatus = safeString(autopilotState?.state, 'untracked');
+  stream.push(
+    `<span class="visibility-line"><strong>Visibility:</strong> ${escapeHtml(phase)} phase · ${escapeHtml(autopilotStatus)}</span>`
+  );
+
+  if (latestEvent) {
+    const actor = safeString(latestEvent.actor, 'system');
+    const command = safeString(latestEvent.command, 'none');
+    const at = formatTimeAgo(latestEvent.timestamp);
+    stream.push(`<span class="visibility-line">Latest command ${escapeHtml(command)} by ${escapeHtml(actor)} (${at})</span>`);
+  }
+
+  if (deltaDone || deltaProofs) {
+    const updates: string[] = [];
+    if (deltaDone) {
+      updates.push(`${deltaDone} task${deltaDone === 1 ? '' : 's'} completed`);
+    }
+
+    if (deltaProofs) {
+      updates.push(`${deltaProofs} proof${deltaProofs === 1 ? '' : 's'} verified`);
+    }
+
+    stream.push(`<span class="visibility-line">Activity: ${updates.join(' · ')}</span>`);
+  }
+
+  const progressText = `${escapeHtml(String(currentDone))}/${escapeHtml(
+    String(snapshot.runSummary.metrics.tasksTotal)
+  )} done`;
+  stream.push(`<span class="visibility-line">Run progress ${progressText}</span>`);
+
+  stream.push(
+    `<span class="visibility-line">Floor load: ${escapeHtml(busiestZone.label)} leading (${escapeHtml(String(busiestZone.count))})</span>`
+  );
+
+  return stream.join('');
+}
+
 export function renderOrgSprites(snapshot: SnapshotLike): string {
   const zonesMarkup = officeFloorZones
     .map(
@@ -332,8 +481,20 @@ export function renderOrgSprites(snapshot: SnapshotLike): string {
     </div>
   `;
 
+  const occupancyMarkup = `
+    <div class="floor-occupancy">
+      ${collectZoneLoad(snapshot)
+        .map(
+          (zone) => `
+          <span class="occupancy-chip">${escapeHtml(zone.label)}: ${zone.count}</span>
+        `
+        )
+        .join('')}
+    </div>
+  `;
+
   if (snapshot.orgView.length === 0) {
-    return `${floorPlanMarkup}<div class="floor-empty">No active personas</div>`;
+    return `${floorPlanMarkup}${occupancyMarkup}<div class="floor-empty">No active personas</div>`;
   }
 
   const spritesMarkup = snapshot.orgView
@@ -377,7 +538,7 @@ export function renderOrgSprites(snapshot: SnapshotLike): string {
     )
     .join('');
 
-  return `${floorPlanMarkup}<div class="sprite-layer">${spritesMarkup}</div>`;
+  return `${floorPlanMarkup}${occupancyMarkup}<div class="sprite-layer">${spritesMarkup}</div>`;
 }
 
 export function renderTaskBoard(snapshot: SnapshotLike): string {
@@ -430,13 +591,10 @@ export function renderArtifactPanel(snapshot: SnapshotLike): string {
     .join('');
 }
 
-export function renderSnapshot(snapshot: SnapshotLike, root: Document): void {
+export function renderSnapshot(snapshot: SnapshotLike, root: Document, previousSnapshot?: SnapshotLike): void {
   const isStale = computeIsStale(snapshot);
-  const staleBadge = root.getElementById('stale-badge');
-  if (staleBadge) {
-    staleBadge.textContent = isStale ? 'STALE' : 'LIVE';
-    staleBadge.className = `badge ${isStale ? 'stale' : 'live'}`;
-  }
+  const nextRefreshAt = Date.now() + POLL_INTERVAL_MS;
+  updateRefreshMeta(isStale, snapshot.generatedAt, Math.min(MAX_REFRESH_LABEL_SECONDS, remainingSeconds(nextRefreshAt, Date.now())), false, root);
 
   const runSummary = root.getElementById('run-summary');
   if (runSummary) {
@@ -462,15 +620,59 @@ export function renderSnapshot(snapshot: SnapshotLike, root: Document): void {
   if (artifactPanel) {
     artifactPanel.innerHTML = renderArtifactPanel(snapshot);
   }
+
+  const visibilityChannel = root.getElementById('visibility-channel');
+  if (visibilityChannel) {
+    visibilityChannel.innerHTML = `<div class="visibility-headline">Investor Visibility Channel</div><div class="visibility-stream">${renderVisibilityStream(
+      snapshot,
+      previousSnapshot
+    )}</div>`;
+  }
 }
 
 export async function boot(): Promise<void> {
-  const response = await fetch('./data/snapshot.json', { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`Failed to load snapshot: ${response.status}`);
-  }
-  const snapshot = normalizeSnapshot(await response.json());
-  renderSnapshot(snapshot, document);
+  let latestSnapshot: SnapshotLike | undefined;
+  let previousSnapshot: SnapshotLike | undefined;
+  let nextRefreshAt = Date.now() + POLL_INTERVAL_MS;
+
+  const refresh = async (): Promise<void> => {
+    try {
+      const response = await fetch(SNAPSHOT_PATH, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Failed to load snapshot: ${response.status}`);
+      }
+
+      const snapshot = normalizeSnapshot(await response.json());
+      latestSnapshot = snapshot;
+      nextRefreshAt = Date.now() + POLL_INTERVAL_MS;
+      renderSnapshot(snapshot, document, previousSnapshot);
+      previousSnapshot = snapshot;
+    } catch {
+      if (!latestSnapshot) {
+        throw new Error('Failed to load snapshot and no previous snapshot exists.');
+      }
+
+      updateRefreshMeta(true, latestSnapshot.generatedAt, remainingSeconds(nextRefreshAt, Date.now()), true, document);
+    }
+  };
+
+  const refreshLabel = (): void => {
+    if (!latestSnapshot) {
+      return;
+    }
+
+    const isStale = computeIsStale(latestSnapshot);
+    const remaining = remainingSeconds(nextRefreshAt, Date.now());
+    updateRefreshMeta(isStale, latestSnapshot.generatedAt, Math.min(MAX_REFRESH_LABEL_SECONDS, remaining), false, document);
+  };
+
+  await refresh();
+  setInterval(() => {
+    void refresh();
+  }, POLL_INTERVAL_MS);
+  setInterval(() => {
+    refreshLabel();
+  }, 1000);
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
